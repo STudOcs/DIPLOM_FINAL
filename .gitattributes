@@ -1,0 +1,12 @@
+# Делаем LF стандартом для всех текстовых файлов
+* text=auto eol=lf
+
+# Явно указываем для критичных файлов
+*.py text eol=lf
+*.sh text eol=lf
+*.tex text eol=lf
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+requirements.txt text eol=lf
+.gitattributes text eol=lf
+frontend/* text eol=lf

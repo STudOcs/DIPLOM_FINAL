@@ -1,0 +1,602 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 1. БАЗОВЫЕ НАСТРОЙКИ ЭКРАНА */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  background-color: #f3f4f6;
+}
+
+/* 2. КОНТЕЙНЕР ЛИСТА (СЕРЫЙ ФОН) */
+.editor-canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* 3. САМ ЛИСТ А4 */
+.ProseMirror {
+  background: white;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm 15mm 20mm 25mm !important; /* Поля СТО СФУ */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  outline: none !important;
+  font-family: "Times New Roman", Times, serif;
+  color: black;
+  text-align: justify;
+  line-height: 1.5;
+}
+
+/* 4. ТИТУЛЬНЫЙ ЛИСТ (data-type="titlepage") */
+.latex-title-page {
+  width: 100%;
+  text-align: center !important; /* Центрируем текст */
+  display: block;
+  margin-bottom: 2rem;
+}
+
+/* Центрируем всё внутри титульника */
+.latex-title-page p, 
+.latex-title-page div, 
+.latex-title-page span,
+.latex-title-page strong {
+  text-align: center !important;
+  display: block;
+  width: 100%;
+}
+
+/* УБИРАЕМ СЕТКУ ТАБЛИЦ НА ТИТУЛЬНИКЕ */
+.latex-title-page table,
+.latex-title-page td,
+.latex-title-page tr,
+.ProseMirror .latex-title-page table,
+.ProseMirror .latex-title-page td {
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.latex-signature-table {
+  width: 100%;
+  margin-top: 30px;
+  border-collapse: collapse;
+}
+
+.latex-signature-table td {
+  text-align: left !important; /* Текст "Преподаватель" внутри ячейки - слева */
+  padding: 10px 5px !important;
+  vertical-align: top;
+}
+
+/* ЛИНИЯ ПОДПИСИ */
+.signature-line {
+  border-bottom: 1px solid black !important;
+  display: inline-block;
+  min-width: 120px;
+  height: 1.2em;
+  margin: 0 5px;
+}
+
+.latex-signature-table small {
+  display: block;
+  font-size: 8pt;
+  color: #666;
+  text-align: center;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+/* 5. ОБЫЧНЫЕ ТАБЛИЦЫ (В ТЕКСТЕ) */
+.ProseMirror table:not(.latex-signature-table) {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+  border: 1px solid black;
+}
+
+.ProseMirror table:not(.latex-signature-table) td,
+.ProseMirror table:not(.latex-signature-table) th {
+  border: 1px solid black;
+  padding: 4px 8px;
+  min-width: 1em;
+}
+
+/* 6. РАЗРЫВ СТРАНИЦЫ */
+.page-break {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  background-color: #f3f4f6;
+  margin: 2rem -25mm 2rem -35mm; /* Вылет за поля */
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.page-break::after {
+  content: "РАЗРЫВ СТРАНИЦЫ";
+  font-size: 10px;
+  color: #9ca3af;
+  letter-spacing: 2px;
+}
+
+/* 7. ОСТАЛЬНОЕ */
+.ProseMirror h1 { font-size: 18pt; font-weight: bold; text-transform: uppercase; margin: 24pt 0 12pt; text-align: center; }
+.ProseMirror h2 { font-size: 16pt; font-weight: bold; margin: 18pt 0 8pt; }
+.ProseMirror ul { list-style-type: disc; padding-left: 2rem; }
+.ProseMirror ol { list-style-type: decimal; padding-left: 2rem; }
+.ProseMirror li { display: list-item; }
+
+.custom-figure { text-align: center; margin: 2rem 0; }
+.figure-caption { font-size: 12pt; margin-top: 10px; }
+
+/* Центрирование текста на титульнике */
+.latex-title-page {
+  width: 100%;
+  display: block;
+  text-align: center !important;
+}
+
+/* Принудительно заставляем параграфы внутри титульника центрироваться */
+.latex-title-page p, 
+.latex-title-page div, 
+.latex-title-page strong,
+.latex-title-page span {
+  text-align: center !important;
+  margin: 0 auto;
+}
+
+/* УДАЛЕНИЕ СЕТКИ: Самая важная часть */
+/* Мы бьем по всем возможным селекторам TipTap */
+.ProseMirror table.latex-signature-table,
+.ProseMirror table.latex-signature-table td,
+.ProseMirror table.latex-signature-table tr {
+  border: none !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+.latex-signature-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 40px 0;
+  border: none !important;
+}
+
+/* Внутри ячеек текст выравниваем по левому краю (для подписей) */
+.latex-signature-table td {
+  text-align: left !important;
+  padding: 5px 10px !important;
+  vertical-align: top;
+  border: none !important;
+}
+
+/* Линия подписи */
+.signature-line {
+  border-bottom: 1px solid black !important;
+  display: inline-block;
+  width: 150px;
+  height: 1.2em;
+}
+
+/* Мелкий текст "подпись, дата" */
+.latex-signature-table small {
+  display: block;
+  text-align: center;
+  font-size: 8pt;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* --- Обычные таблицы в тексте --- */
+.ProseMirror table:not(.latex-signature-table) {
+  border: 1px solid #ced4da;
+  border-collapse: collapse;
+}
+.ProseMirror table:not(.latex-signature-table) td {
+  border: 1px solid #ced4da;
+}
+
+/* Принудительное центрирование титульника */
+.latex-title-page {
+  text-align: center !important;
+}
+
+/* Скрываем сетку для конкретной таблицы */
+.latex-signature-table, 
+.latex-signature-table td, 
+.latex-signature-table tr,
+.ProseMirror .latex-signature-table td {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Линия подписи */
+.signature-line {
+  border-bottom: 1px solid black !important;
+  display: inline-block;
+  min-width: 150px;
+  height: 1.2em;
+  vertical-align: bottom;
+}
+
+/* Центрируем все параграфы внутри титульника, если они не в таблице */
+.latex-title-page p {
+  text-align: center !important;
+}
+
+/* Улучшаем вид подписей в таблице */
+.latex-signature-table td {
+  text-align: left !important; /* Надписи "Преподаватель" слева */
+}
+.latex-signature-table td small {
+  text-align: center !important; /* "подпись, дата" под чертой - по центру */
+  display: block;
+}
+
+/* src/index.css */
+
+/* Весь контент редактора по умолчанию центрируем для титульника */
+/* Но обычный текст в h-тегах будет слушаться своих стилей */
+.latex-title-page {
+  text-align: center !important;
+  width: 100%;
+}
+
+/* Линия подписи - должна быть черной и видимой */
+.signature-line {
+  border-bottom: 2px solid black !important;
+  display: inline-block !important;
+  min-width: 150px;
+  height: 1.2em;
+  margin: 0 5px;
+}
+
+/* УНИЧТОЖАЕМ СЕТКУ ДЛЯ ТИТУЛЬНИКА */
+/* Эти правила перекроют стандартные стили таблиц TipTap */
+.ProseMirror table.latex-signature-table,
+.ProseMirror table.latex-signature-table td,
+.ProseMirror table.latex-signature-table tr {
+  border: none !important;
+  border-width: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.latex-signature-table {
+  width: 100%;
+  border: none !important;
+  margin: 2rem 0;
+}
+
+.latex-signature-table td {
+  border: none !important;
+  padding: 8px 4px !important;
+}
+
+/* Текст "подпись, дата" под чертой */
+.latex-signature-table small {
+  display: block !important;
+  text-align: center !important;
+  margin-top: 2px;
+  font-size: 8pt;
+}
+
+/* УБИРАЕМ СЕТКУ ДЛЯ ТАБЛИЦЫ ПОДПИСЕЙ */
+/* Используем очень специфичные селекторы, чтобы перебить стили TipTap */
+.ProseMirror .latex-signature-table,
+.ProseMirror .latex-signature-table td,
+.ProseMirror .latex-signature-table tr {
+  border: none !important;
+  border-width: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.latex-signature-table {
+  border: none !important;
+  width: 100% !important;
+}
+
+.latex-signature-table td {
+  border: none !important;
+  text-align: left !important; /* Надписи типа "Преподаватель" должны быть слева внутри ячейки */
+}
+
+/* ЛИНИЯ ПОДПИСИ */
+.signature-line {
+  border-bottom: 1.5px solid black !important;
+  display: inline-block !important;
+  min-width: 150px;
+}
+
+/* ЦЕНТРИРОВАНИЕ ТИТУЛЬНИКА */
+.latex-title-page {
+  text-align: center !important;
+  width: 100%;
+}
+
+/* Принудительно центрируем все блоки внутри титульника */
+.latex-title-page p, 
+.latex-title-page div {
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+/* Мелкий текст подписей */
+.latex-signature-table small {
+  display: block;
+  text-align: center;
+  font-size: 8pt;
+  margin-top: 2px;
+}
+
+/* 1. УБИВАЕМ СЕТКУ У ТИТУЛЬНИКА (самые жесткие правила) */
+.ProseMirror table.latex-signature-table,
+.ProseMirror table.latex-signature-table td,
+.ProseMirror table.latex-signature-table tr,
+.ProseMirror [data-type="titlepage"] table,
+.ProseMirror [data-type="titlepage"] td {
+  border: none !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* 2. ЦЕНТРИРОВАНИЕ ТИТУЛЬНИКА */
+.latex-title-page, 
+[data-type="titlepage"] {
+  text-align: center !important;
+  display: block;
+  width: 100%;
+}
+
+/* Центрируем все параграфы внутри титульника */
+[data-type="titlepage"] p {
+  text-align: center !important;
+  justify-content: center !important;
+  display: flex;
+}
+
+/* 3. ОБЫЧНЫЕ ТАБЛИЦЫ (в тексте) ПУСТЬ ОСТАЮТСЯ С ГРАНИЦАМИ */
+.ProseMirror table:not(.latex-signature-table) {
+  border: 1px solid #ced4da;
+}
+.ProseMirror table:not(.latex-signature-table) td {
+  border: 1px solid #ced4da;
+}
+
+.latex-signature-table {
+  border: 0px;
+}
+
+.latex-signature-table td {
+  border: 0px;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 1. БАЗОВЫЕ НАСТРОЙКИ (скролл и фон) */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  background-color: #f3f4f6;
+}
+
+.editor-canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* 2. ЛИСТ A4 */
+.ProseMirror {
+  background: white;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm 15mm 20mm 25mm !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  outline: none !important;
+  font-family: "Times New Roman", Times, serif;
+}
+
+/* 3. УДАЛЕНИЕ СЕТКИ У ТИТУЛЬНИКА (ПРИНУДИТЕЛЬНО) */
+/* Мы ищем любую таблицу внутри блока с атрибутом titlepage */
+
+.ProseMirror [data-type="titlepage"] table,
+.ProseMirror [data-type="titlepage"] td,
+.ProseMirror [data-type="titlepage"] tr,
+.ProseMirror .signature-section-wrapper table,
+.ProseMirror .signature-section-wrapper td {
+  border: none !important;
+  border-width: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* Скрываем серые линии, которые TipTap рисует для пустых ячеек */
+.ProseMirror [data-type="titlepage"] td::before {
+  display: none !important;
+}
+
+/* 4. ЦЕНТРИРОВАНИЕ ТИТУЛЬНИКА */
+.latex-title-page, 
+[data-type="titlepage"] {
+  text-align: center !important;
+  width: 100%;
+}
+
+/* Центрируем каждый абзац на титульнике */
+[data-type="titlepage"] p {
+  display: flex !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* 5. ОБЫЧНЫЕ ТАБЛИЦЫ (в остальном тексте) */
+/* Эти правила применяются только если таблица НЕ внутри титульника */
+.ProseMirror table:not(.signature-table) {
+  border-collapse: collapse;
+  border: 1px solid #ced4da;
+  width: 100%;
+}
+
+.ProseMirror table:not(.signature-table) td {
+  border: 1px solid #ced4da;
+  padding: 4px;
+}
+
+/* 6. ОФОРМЛЕНИЕ ПОДПИСЕЙ */
+.signature-table {
+  width: 100%;
+  margin-top: 30px;
+}
+
+.signature-table td {
+  text-align: left !important;
+  vertical-align: top;
+  padding: 10px 5px !important;
+}
+
+.signature-table small {
+  display: block;
+  text-align: center;
+  font-size: 8pt;
+  margin-top: 2px;
+}
+
+/* --- ТИТУЛЬНЫЙ ЛИСТ (blockquote) --- */
+.ProseMirror blockquote {
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-style: normal !important;
+  text-align: center !important; /* Центрируем всё */
+  width: 100%;
+}
+
+/* Центрируем текст, параграфы и заголовки */
+.ProseMirror blockquote p,
+.ProseMirror blockquote h1,
+.ProseMirror blockquote h2,
+.ProseMirror blockquote div {
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+/* --- ТАБЛИЦА ПОДПИСЕЙ: Убираем центровку и сетку --- */
+.ProseMirror blockquote table {
+  margin: 2rem 0 !important;
+  border-collapse: collapse !important;
+  border: none !important;
+}
+
+.ProseMirror blockquote td {
+  /* ВАЖНО: Текст внутри ячеек (Преподаватель/Иванов) прижимаем влево */
+  text-align: left !important; 
+  border: none !important;
+  border-width: 0 !important;
+  padding: 10px 5px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Скрываем точки/сетку TipTap */
+.ProseMirror blockquote td::before {
+  display: none !important;
+}
+
+/* 4. ОБЫЧНЫЕ ТАБЛИЦЫ (в остальном тексте) */
+.ProseMirror table:not(blockquote table) {
+  border-collapse: collapse;
+  border: 1px solid #ced4da;
+  width: 100%;
+}
+
+.ProseMirror table:not(blockquote table) td {
+  border: 1px solid #000000;
+  padding: 4px;
+}
+
+.ProseMirror table:not(blockquote table) tr {
+  border: 1px solid #ced4da;
+  padding: 4px;
+}
+
+.ProseMirror table:not(blockquote table) th {
+  border: 1px solid #ced4da;
+  padding: 4px;
+}
+
+/* 5. РАЗРЫВ СТРАНИЦЫ */
+.page-break {
+  height: 20px;
+  border-top: 2px dashed #e2e8f0;
+  margin: 2rem 0;
+}
+
+/* 5. РАЗРЫВ СТРАНИЦЫ (Визуальный) */
+.page-break {
+  height: 20px;
+  border-top: 2px dashed #e2e8f0;
+  margin: 2rem 0;
+  position: relative;
+}
+
+/* 6. СКРОЛЛБАР */
+.custom-editor-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+.custom-editor-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.custom-editor-scrollbar::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 5px;
+}
+.custom-editor-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  /* overflow: hidden; — это правило блокирует скролл везде. 
+     Если оно есть, то каждый компонент Page должен иметь overflow-y-auto самостоятельно. */
+  overflow: hidden; 
+}
+
+/* Добавь это, чтобы скроллбар выглядел аккуратно */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

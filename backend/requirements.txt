@@ -1,0 +1,13 @@
+django==4.2.7
+django-environ==0.11.2
+psycopg2-binary==2.9.9
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+djangorestframework-simplejwt==5.3.1
+celery==5.3.4
+redis==5.0.1
+boto3==1.28.0
+django-storages==1.14.2
+jinja2==3.1.2
+djoser==2.2.0
+djangorestframework-simplejwt==5.3.1
