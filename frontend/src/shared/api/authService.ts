@@ -1,6 +1,6 @@
 // src/shared/api/authService.ts
 import { $api } from './base';
-import { RegisterData, LoginResponse } from '../../entities/user/model/types';
+import { RegisterData, LoginResponse, UserProfile } from '../../entities/user/model/types';
 
 export interface TitleData {
   last_name: string;
@@ -13,34 +13,28 @@ export interface TitleData {
 }
 
 export const authService = {
-  // Логин через OAuth2 (form-data)
-  async login(loginValue: string, passwordValue: string): Promise<LoginResponse> {
-    const params = new URLSearchParams();
-    params.append('username', loginValue); // FastAPI ожидает именно 'username'
-    params.append('password', passwordValue);
+async register(data: RegisterData) {
+        return $api.post('/users/users/', data); // путь по твоему гайду
+    },
 
-    const { data } = await $api.post<LoginResponse>('/auth/login', params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+    // Логин: Djoser/JWT ожидает JSON
+    async login(username: string, password: string): Promise<LoginResponse> {
+        const { data } = await $api.post<LoginResponse>('/users/jwt/create/', { 
+            username, 
+            password 
+        });
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
+        return data;
+    },
 
-    localStorage.setItem('token', data.access_token);
-    return data;
-  },
+    async getMe(): Promise<UserProfile> {
+        const { data } = await $api.get<UserProfile>('/users/users/me/');
+        return data;
+    },
 
-  // Регистрация (JSON)
-  async register(data: RegisterData): Promise<any> {
-    const response = await $api.post('/auth/register', data);
-    return response.data;
-  },
-
-  async getTitleData(): Promise<TitleData> {
-    const { data } = await $api.get<TitleData>('/auth/me/title-data');
-    return data;
-  },
-
-  logout() {
-    localStorage.removeItem('token');
-  }
+    logout() {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+    }
 };

@@ -11,16 +11,14 @@ export const RegisterForm = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<RegisterData>({
+    username: '',
     email: '',
-    login: '',
-    last_name: '',
-    first_name: '',
-    middle_name: '',
-    group_name: '',
-    student_card: '',
-    department: '',
     password: '',
-  });
+    first_name: '',
+    last_name: '',
+    middle_name: '',
+    student_group: '',
+});
 
   const handleChange = (field: keyof RegisterData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -32,69 +30,46 @@ export const RegisterForm = () => {
     setError(null);
 
     try {
+      // Шлем данные в Djoser (POST /api/v1/users/)
       await authService.register(formData);
-      alert('Регистрация успешна! Теперь вы можете войти.');
+      alert('Регистрация прошла успешно! Теперь вы можете войти.');
       navigate('/login');
     } catch (err: any) {
-      const detail = err.response?.data?.detail;
-      setError(typeof detail === 'string' ? detail : 'Ошибка валидации данных. Проверьте зачетку и группу.');
+      // Djoser возвращает ошибки в виде объекта { field: ["error message"] }
+      const responseData = err.response?.data;
+      if (responseData) {
+        const firstError = Object.values(responseData)[0];
+        setError(Array.isArray(firstError) ? firstError[0] : 'Ошибка регистрации');
+      } else {
+        setError('Сервер недоступен');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-2xl p-8 bg-white shadow-2xl rounded-3xl border border-gray-100">
-      <div className="text-center mb-8">
-        <h2 className="text-4xl font-black text-orange-600 tracking-tighter">СФУ.ДОК</h2>
-        <p className="text-gray-500 mt-2 font-medium">Создание аккаунта студента</p>
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-2xl p-8 bg-white shadow-xl rounded-2xl">
+      <h2 className="text-2xl font-bold text-center">Регистрация СФУ.ДОК</h2>
+      
+      {error && <div className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</div>}
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input label="Логин" value={formData.username} onChange={e => handleChange('username', e.target.value)} required />
+        <Input label="Email" type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} required />
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 animate-shake">
-          {error}
-        </div>
-      )}
+      <Input label="Пароль" type="password" value={formData.password} onChange={e => handleChange('password', e.target.value)} required />
 
-      {/* ГРУППА: Аккаунт */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Данные входа</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Логин" placeholder="ivanov_2025" value={formData.login} onChange={e => handleChange('login', e.target.value)} required />
-          <Input label="Email" type="email" placeholder="user@example.com" value={formData.email} onChange={e => handleChange('email', e.target.value)} required />
-        </div>
-        <Input label="Пароль" type="password" placeholder="••••••••" value={formData.password} onChange={e => handleChange('password', e.target.value)} required />
+      <div className="grid grid-cols-3 gap-4">
+        <Input label="Фамилия" value={formData.last_name} onChange={e => handleChange('last_name', e.target.value)} required />
+        <Input label="Имя" value={formData.first_name} onChange={e => handleChange('first_name', e.target.value)} required />
+        <Input label="Отчество" value={formData.middle_name} onChange={e => handleChange('middle_name', e.target.value)} required />
       </div>
 
-      {/* ГРУППА: Личные данные */}
-      <div className="space-y-4 pt-4 border-t border-gray-50">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Личные данные</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input label="Фамилия" placeholder="Иванов" value={formData.last_name} onChange={e => handleChange('last_name', e.target.value)} required />
-          <Input label="Имя" placeholder="Иван" value={formData.first_name} onChange={e => handleChange('first_name', e.target.value)} required />
-          <Input label="Отчество" placeholder="Иванович" value={formData.middle_name} onChange={e => handleChange('middle_name', e.target.value)} />
-        </div>
-      </div>
+      <Input label="Группа (СФУ)" placeholder="КИ22-14Б" value={formData.student_group} onChange={e => handleChange('student_group', e.target.value)} required />
 
-      {/* ГРУППА: Учеба */}
-      <div className="space-y-4 pt-4 border-t border-gray-50">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Учебные данные</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Группа" placeholder="КИ22-14Б" value={formData.group_name} onChange={e => handleChange('group_name', e.target.value)} required />
-          <Input label="Номер зачетки" placeholder="032213102" value={formData.student_card} onChange={e => handleChange('student_card', e.target.value)} required />
-        </div>
-        <Input label="Кафедра" placeholder="Кафедра вычислительной техники" value={formData.department} onChange={e => handleChange('department', e.target.value)} />
-      </div>
-
-      <div className="pt-6">
-        <Button type="submit" disabled={isLoading} className="h-12 text-lg shadow-lg shadow-orange-200">
-          {isLoading ? 'Регистрация...' : 'Создать аккаунт'}
-        </Button>
-      </div>
-
-      <p className="text-center text-sm text-gray-500">
-        Уже есть аккаунт? <Link to="/login" className="text-orange-600 font-bold hover:underline">Войти</Link>
-      </p>
+      <Button type="submit" disabled={isLoading}>{isLoading ? 'Загрузка...' : 'Создать аккаунт'}</Button>
     </form>
   );
 };

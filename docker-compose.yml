@@ -37,17 +37,17 @@ services:
         condition: service_started
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    ports:
-      - "3000:3000"
     environment:
       - VITE_API_URL=http://localhost:8000/api/v1
-    depends_on:
-      - backend
-    command: npm run start -- --host
+      - CHOKIDAR_USEPOLLING=true
+    stdin_open: true
 
 volumes:
   postgres_data:
