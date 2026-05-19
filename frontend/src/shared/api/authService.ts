@@ -13,15 +13,15 @@ export interface TitleData {
 }
 
 export const authService = {
-async register(data: RegisterData) {
-        return $api.post('/users/users/', data); // путь по твоему гайду
+    async register(data: RegisterData) {
+        return $api.post('/users/users/', data);
     },
 
     // Логин: Djoser/JWT ожидает JSON
-    async login(username: string, password: string): Promise<LoginResponse> {
+    async login(loginValue: string, passwordValue: string): Promise<LoginResponse> {
         const { data } = await $api.post<LoginResponse>('/users/jwt/create/', { 
-            username, 
-            password 
+            email: loginValue,
+            password: passwordValue
         });
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
@@ -31,6 +31,10 @@ async register(data: RegisterData) {
     async getMe(): Promise<UserProfile> {
         const { data } = await $api.get<UserProfile>('/users/users/me/');
         return data;
+    },
+
+    async getTitleData(): Promise<UserProfile> {
+        return this.getMe();
     },
 
     logout() {

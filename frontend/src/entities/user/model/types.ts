@@ -7,6 +7,9 @@ export interface UserProfile {
   last_name: string;
   middle_name: string;
   student_group: string;
+  student_card?: string;   // Сделаем необязательными, чтобы не было ошибок
+  department?: string;     // если их нет в стандартном Djoser
+  registration_date: string; 
 }
 
 export interface UserUpdatePayload {
@@ -25,6 +28,7 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  re_password: string;
   first_name: string;
   last_name: string;
   middle_name: string;

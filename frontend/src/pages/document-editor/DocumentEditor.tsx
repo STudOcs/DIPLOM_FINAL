@@ -65,10 +65,23 @@ const DocumentEditor = () => {
         documentService.getTemplates(),
         authService.getTitleData()
       ])
-        .then(([docData, templatesData, titleData]) => {
+        .then(([docData, templatesData, profile]) => {
           setDoc(docData);
           setTemplates(templatesData);
-          setUserData(titleData);
+
+          const mappedUserData: TitleData = {
+            last_name: profile.last_name,
+            first_name: profile.first_name,
+            middle_name: profile.middle_name,
+            // Генерируем инициалы: "Иванов И. И."
+            initials: `${profile.last_name} ${profile.first_name[0] ? profile.first_name[0] + '.' : ''} ${profile.middle_name[0] ? profile.middle_name[0] + '.' : ''}`.trim(),
+            // Мапим student_group -> group
+            group: profile.student_group,
+            student_card: profile.student_card || '',
+            department: profile.department || ''
+          };
+
+          setUserData(mappedUserData);
 
           const initial = docData.content_json?.html || latexToHtml(docData.latex_source, {});
           setContent(initial);

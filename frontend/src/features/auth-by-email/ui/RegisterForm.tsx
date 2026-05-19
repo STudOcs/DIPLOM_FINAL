@@ -14,6 +14,7 @@ export const RegisterForm = () => {
     username: '',
     email: '',
     password: '',
+    re_password: '',
     first_name: '',
     last_name: '',
     middle_name: '',
@@ -26,26 +27,34 @@ export const RegisterForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.password !== formData.re_password) {
+      setError("Пароли не совпадают");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      // Шлем данные в Djoser (POST /api/v1/users/)
       await authService.register(formData);
       alert('Регистрация прошла успешно! Теперь вы можете войти.');
       navigate('/login');
     } catch (err: any) {
-      // Djoser возвращает ошибки в виде объекта { field: ["error message"] }
-      const responseData = err.response?.data;
-      if (responseData) {
-        const firstError = Object.values(responseData)[0];
-        setError(Array.isArray(firstError) ? firstError[0] : 'Ошибка регистрации');
-      } else {
-        setError('Сервер недоступен');
-      }
-    } finally {
-      setIsLoading(false);
+      const serverErrors = err.response?.data;
+      if (serverErrors) {
+      
+      const errorMessages = Object.entries(serverErrors)
+        .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(' ') : messages}`)
+        .join(' | ');
+      
+      setError(errorMessages);
+    } else {
+      setError('Произошла неизвестная ошибка');
     }
+  } finally {
+    setIsLoading(false);
+  }
   };
 
   return (
@@ -59,7 +68,22 @@ export const RegisterForm = () => {
         <Input label="Email" type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} required />
       </div>
 
-      <Input label="Пароль" type="password" value={formData.password} onChange={e => handleChange('password', e.target.value)} required />
+      <div className="grid grid-cols-2 gap-4">
+        <Input 
+            label="Пароль" 
+            type="password" 
+            value={formData.password} 
+            onChange={e => handleChange('password', e.target.value)} 
+            required 
+        />
+        <Input 
+            label="Повторите пароль" 
+            type="password" 
+            value={formData.re_password} 
+            onChange={e => handleChange('re_password', e.target.value)} 
+            required 
+        />
+      </div>
 
       <div className="grid grid-cols-3 gap-4">
         <Input label="Фамилия" value={formData.last_name} onChange={e => handleChange('last_name', e.target.value)} required />

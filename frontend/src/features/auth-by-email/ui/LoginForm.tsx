@@ -6,7 +6,7 @@ import { Input } from '../../../shared/ui/Input';
 import { Button } from '../../../shared/ui/Button';
 
 export const LoginForm = () => {
-  const [login, setLogin] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +17,7 @@ export const LoginForm = () => {
     setIsLoading(true);
     setError(null);
     try {
-      await authService.login(login, password);
+      await authService.login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Неверный логин или пароль');
@@ -35,8 +35,22 @@ export const LoginForm = () => {
 
       {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">{error}</div>}
 
-      <Input label="Логин" value={login} onChange={e => setLogin(e.target.value)} required />
-      <Input label="Пароль" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+      <Input 
+        label="Email" 
+        type="email" 
+        placeholder="student@sfu-kras.ru"
+        value={email} 
+        onChange={e => setEmail(e.target.value)} 
+        required 
+      />
+      
+      <Input 
+        label="Пароль" 
+        type="password" 
+        value={password} 
+        onChange={e => setPassword(e.target.value)} 
+        required 
+      />
 
       <Button type="submit" disabled={isLoading}>{isLoading ? 'Вход...' : 'Войти'}</Button>
 

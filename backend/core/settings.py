@@ -175,4 +175,24 @@ REST_FRAMEWORK = {
 # Настройки почты (пока в консоль, чтобы видеть ссылки сброса пароля)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False 
+
+# 4. Укажи конкретные адреса фронтенда
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# 5. РАЗРЕШИ передачу учетных данных (токенов/кук)
+CORS_ALLOW_CREDENTIALS = True
+
+# Если ты используешь кастомные заголовки (например, Authorization), 
+# убедись, что они разрешены (обычно по умолчанию всё ок)
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrf-token",
+    "x-requested-with",
+]
