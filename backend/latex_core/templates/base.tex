@@ -1,0 +1,99 @@
+\documentclass[a4paper]{scrartcl}
+% преамбула
+\usepackage{polyglossia}
+\setdefaultlanguage[forceheadingpunctuation=false]{russian}
+\setotherlanguage{english}
+\defaultfontfeatures{Ligatures=TeX}
+
+\usepackage{hyperref, xcolor}
+\usepackage{cite}
+\hypersetup{backref, colorlinks=true, linkcolor=black, urlcolor=black, linktocpage, pdfborder = {0 0 1 [1 0]}}
+
+%Указание используемых шрифтов
+\setmainfont{Times New Roman}
+\newfontfamily{\cyrillicfont}{Times New Roman}
+\setsansfont{Arial}
+\newfontfamily{\cyrillicfontsf}{Arial}
+\setmonofont{Courier New}
+\newfontfamily{\cyrillicfonttt}{Courier New}
+
+%Вставка в документ растровых изображения
+\usepackage{graphics, graphicx}
+
+%Пакеты для работы с таблицами
+\usepackage{longtable, ltcaption}
+\usepackage{array, tabu, tabularx, tabulary}
+
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm]{geometry}
+
+\KOMAoptions{fontsize=14}
+\setlength{\parindent}{12.5mm}
+\usepackage[onehalfspacing]{setspace}
+\setkomafont{section}{\bfseries\rmfamily}
+\RedeclareSectionCommand[indent=12.5mm]{section}
+
+%подписи таблицы и картинки
+\usepackage{caption}
+\captionsetup[table]{format=default, labelsep=endash}
+\captionsetup[figure]{labelsep=endash}
+\captionsetup[table]{labelsep=endash, singlelinecheck = off, position = above}
+\renewcaptionname{russian}{\figurename}{Рисунок}
+\renewcaptionname{russian}{\contentsname}{\begin{center}СОДЕРЖАНИЕ\end{center}}
+
+%Формулы
+\usepackage[fleqn]{amsmath}
+\setlength{\parindent}{1.25cm}% абзацный отступ
+%\setlength{\mathindent}{12.5mm}
+
+\usepackage{hyperref}
+
+\usepackage{placeins}
+
+\usepackage{indentfirst}
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftsubsecdotsep}} % Отточие для разделов
+\setlength{\cftbeforesecskip}{0.5em} % Расстояние между строками разделов
+\setlength{\cftsecindent}{0pt} % Разделы без отступов
+\setlength{\cftsubsecindent}{2em} % Подразделы с отступом 2 знака
+\setlength{\cftsubsubsecindent}{4em} % Пункты с отступом 4 знака
+\renewcommand{\cfttoctitlefont}{\bfseries\rmfamily} % Times New Roman, нормальный стиль, центр
+
+\begin{document}
+
+\begin{titlepage}
+\newgeometry{top=10mm, bottom=10mm, left=10mm, right=10mm}
+\begin{center}
+{\large Министерство науки и высшего образования РФ\\
+ Федеральное государственное автономное\\
+ образовательное учреждение высшего образования}\\
+«\textbf{{\large СИБИРСКИЙ ФЕДЕРАЛЬНЫЙ УНИВЕРСИТЕТ}}»\\[5mm]
+Институт космических и информационных технологий\\
+кафедра «»\\
+\vfill
+\textbf{\large ОТЧЕТ О ЛАБОРАТОРНОЙ РАБОТЕ №1}\\[5mm]
+По дисциплине: «»\\
+\end{center}
+\vfill
+\begin{tabular}{l c m{0.01\textwidth} l}
+Преподаватель&\rule{3cm}{0.1pt}& & Иванов ~И.~И.\\[0mm]
+&{\footnotesize подпись, дата}& & \\[10mm]
+Студент группы VAR_GROUP № з/к VAR_CARD &\rule{3cm}{0.1pt}& & VAR_STUDENT_SIGNATURE\\[1mm]
+&{\footnotesize подпись, дата}& & \\[10mm]
+
+\end{tabular}
+\vfill
+\begin{center}
+Красноярск {\the\year}
+\end{center}
+\end{titlepage}
+
+\restoregeometry
+
+\newpage
+\section{Введение}
+
+\section{Основная часть}
+
+\section{Вывод}
+
+\end{document}
