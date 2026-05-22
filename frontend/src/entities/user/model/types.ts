@@ -1,15 +1,15 @@
 // src/entities/user/model/types.ts
 export interface UserProfile {
-  user_id: number;
-  login: string;
+  id: number;
+  username: string;
   email: string;
-  last_name: string;
   first_name: string;
+  last_name: string;
   middle_name: string;
-  group_name: string;
-  student_card: string;
-  department: string;
-  registration_date: string;
+  student_group: string;
+  student_card?: string;   // Сделаем необязательными, чтобы не было ошибок
+  department?: string;     // если их нет в стандартном Djoser
+  registration_date: string; 
 }
 
 export interface UserUpdatePayload {
@@ -24,15 +24,15 @@ export interface UserUpdatePayload {
 }
 
 export interface RegisterData {
+  // Поля, которые требует Djoser (POST /api/v1/users/users/)
+  username: string;
   email: string;
-  login: string;
-  last_name: string;
-  first_name: string;
-  middle_name: string;
-  group_name: string;
-  student_card: string;
-  department: string;
   password: string;
+  re_password: string;
+  first_name: string;
+  last_name: string;
+  middle_name: string;
+  student_group: string;
 }
 
 // Данные для обновления (PATCH запрос)
@@ -43,6 +43,6 @@ export interface UpdateProfileDto extends Partial<UserProfile> {
 
 // Ответ при логине
 export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-} 
+  access: string;  // Djoser возвращает "access"
+  refresh: string; // и "refresh"
+}

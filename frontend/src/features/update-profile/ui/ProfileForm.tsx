@@ -62,7 +62,7 @@ export const ProfileForm = ({ initialData, onSave }: ProfileFormProps) => {
           Учебные данные
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Номер группы" value={formData.group_name} onChange={(e) => handleChange('group_name', e.target.value)} />
+          <Input label="Номер группы" value={formData.student_group} onChange={(e) => handleChange('student_group', e.target.value)} />
           <Input label="Номер зачетки" value={formData.student_card} onChange={(e) => handleChange('student_card', e.target.value)} />
           <div className="md:col-span-2">
             <Input label="Кафедра" value={formData.department} onChange={(e) => handleChange('department', e.target.value)} />
