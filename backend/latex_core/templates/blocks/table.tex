@@ -1,0 +1,13 @@
+% [BLOCK_START:[[ block_id ]]:TYPE:table]
+\begin{table}[htbp]
+    \caption{ [[ caption ]] }
+    \label{tab:[[ block_id ]]}
+    \begin{tabularx}{\textwidth}{ [[ column_spec | default('|X|X|') ]] }
+        \toprule
+        [[ header_row ]] \\
+        \midrule
+        [[ body_rows ]]
+        \bottomrule
+    \end{tabularx}
+\end{table}
+% [BLOCK_END:[[ block_id ]]]

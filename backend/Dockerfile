@@ -1,18 +1,29 @@
 FROM python:3.11-slim
 
-# Устанавливаем системные зависимости
+# 1. Включаем репозиторий contrib (нужен для шрифтов Microsoft)
+# Проверяем оба варианта расположения конфигов (для разных версий Debian)
+RUN if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's/main$/main contrib/g' /etc/apt/sources.list; \
+    fi && \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i 's/Components: main/Components: main contrib/g' /etc/apt/sources.list.d/debian.sources; \
+    fi
+
+# 2. Обновляем списки и ставим зависимости
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
-    # Устанавливаем XeTeX и поддержку кириллицы (~1 Гб)
     texlive-xetex \
     texlive-lang-cyrillic \
     texlive-fonts-recommended \
     texlive-plain-generic \
-    # Пакеты для сложных таблиц и графики
     texlive-latex-extra \
-    # Если будем использовать minted для листингов кода (нужен python-pygments)
     python3-pygments \
+    fontconfig \
+    # Автоматическое принятие лицензии MS
+    && echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
+    && apt-get install -y --no-install-recommends ttf-mscorefonts-installer \
+    && fc-cache -f -v \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

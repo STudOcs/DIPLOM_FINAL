@@ -1,0 +1,48 @@
+\begin{titlepage}
+    \newgeometry{top=20mm, bottom=10mm, left=30mm, right=10mm}
+    \begin{center}
+        \begin{spacing}{0.5}
+        Министерство науки и высшего образования РФ\\
+        {\small Федеральное государственное автономное}\\
+        {\small образовательное учреждение высшего образования}\\
+        \textbf{\small<<СИБИРСКИЙ ФЕДЕРАЛЬНЫЙ УНИВЕРСИТЕТ>>}\\
+        \end{spacing}
+        \vfill
+        \begin{spacing}{1.0}
+        [[ doc.institute_name | default("ИНСТИТУТ КОСМИЧЕСКИХ И ИНФОРМАЦИОННЫХ ТЕХНОЛОГИЙ") ]]\\
+        Кафедра [[ doc.chair_name | default("«ПРИКЛАДНАЯ ИТ»") ]]\\
+        \end{spacing}
+    \end{center}        
+    
+    \begin{minipage}[h]{0.45\linewidth}\hfil\end{minipage}
+    \hspace{5mm}
+    \begin{minipage}[h]{0.45\linewidth}
+        \begin{spacing}{1.0}
+            УТВЕРЖДАЮ\\
+            Заведующий кафедрой\\[10mm]
+            \rule{2cm}{.1pt}~[[ doc.chair_head_initials ]] [[ doc.chair_head_surname ]]\\
+            {\small подпись}\\[10mm]
+            <<\rule{1cm}{.1pt}>>\rule{2.5cm}{.1pt} [[ doc.year ]] г.
+        \end{spacing}
+    \end{minipage}
+    
+    \vspace{7mm}
+    \vfill
+    \begin{center}
+        {\Large \textbf{ОТЧЕТ О ЛАБОРАТОРНОЙ РАБОТЕ №[[ doc.lab_number ]]}}\\[7mm]
+        [[ doc.direction_code ]] -- <<[[ doc.direction_name ]]>>\\[3mm]
+        [[ doc.title ]]
+    \end{center}
+    \vfill
+    
+\noindent
+\begin{tabular}{@{} p{0.20\textwidth} >{\centering\arraybackslash} p{0.25\textwidth} p{0.22\textwidth} p{0.28\textwidth} @{}}
+    Руководитель & \rule{3.5cm}{.1pt} & [[ doc.supervisor_degree ]] & [[ doc.supervisor_initials ]] [[ doc.supervisor_surname ]] \\
+    Выпускник & \rule{3.5cm}{.1pt} & & [[ user.last_name ]] [[ user.first_name[0] ]]. [[ user.middle_name[0] ]]. \\
+    Нормоконтролёр & \rule{3.5cm}{.1pt} & [[ doc.controller_degree ]] & [[ doc.controller_initials ]] [[ doc.controller_surname ]] \\
+\end{tabular}
+
+\vfill
+\begin{center}Красноярск [[ doc.year ]]\end{center}
+\end{titlepage}
+\restoregeometry

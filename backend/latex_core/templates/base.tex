@@ -1,0 +1,59 @@
+\documentclass[paper=a4, fontsize=14pt, pagesize, DIV=calc, oneside]{scrreport}
+
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\defaultfontfeatures{Ligatures=TeX} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}
+\setlength{\topskip}{0pt}
+
+\usepackage{graphicx}
+\usepackage{indentfirst}
+\usepackage[dvipsnames, table]{xcolor}
+\usepackage[colorlinks]{hyperref} 
+\hypersetup{colorlinks, linkcolor=black}
+
+\usepackage{caption}
+\captionsetup[figure]{labelsep=endash, position=below}
+\captionsetup[table]{labelsep=endash, singlelinecheck=off, position=above}
+
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[fleqn]{amsmath}
+
+\KOMAoptions{fontsize=14, numbers=noendperiod, toc=chapterentrydotfill}
+
+\setkomafont{chapter}{\bfseries\rmfamily\normalsize}
+\setkomafont{section}{\bfseries\rmfamily}
+\setkomafont{subsection}{\bfseries\rmfamily}
+\setkomafont{disposition}{\rmfamily\normalsize}
+\setkomafont{pagenumber}{\normalfont\rmfamily}
+
+\RedeclareSectionCommand[beforeskip=0pt, afterskip=0.1\baselineskip]{chapter}
+\RedeclareSectionCommand[indent=1.25cm, afterskip=0.1\baselineskip]{section}
+\RedeclareSectionCommand[indent=1.25cm, afterskip=0.1\baselineskip]{subsection}
+
+\usepackage[onehalfspacing]{setspace}
+\setlength{\parindent}{1.25cm}
+
+\usepackage{enumitem}
+\setlist[itemize,1]{label=\textendash, leftmargin=1.25cm, labelsep=0.5em}
+\setlist[enumerate,1]{label=\alph*), leftmargin=1.25cm, labelsep=0.5em}
+
+\begin{document}
+
+[[ title_page_content ]]
+
+\pagestyle{plain}
+\setcounter{page}{2}
+
+\newpage
+\tableofcontents
+\newpage
+
+[[ blocks_content ]]
+
+\end{document}
