@@ -11,13 +11,14 @@ interface DocumentCardProps {
 }
 
 export const DocumentCard = ({ doc, onClick, onDelete }: DocumentCardProps) => {
+  
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('ru-RU');
   };
 
-  return (
-    <div 
+  return (   
+  <div 
       onClick={onClick}
       className="group p-5 bg-white border border-gray-200 rounded-2xl hover:border-orange-400 hover:shadow-xl transition-all cursor-pointer flex flex-col h-[220px] relative overflow-hidden"
     >

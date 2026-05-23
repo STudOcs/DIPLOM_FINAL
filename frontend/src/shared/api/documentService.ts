@@ -1,6 +1,6 @@
 // src/shared/api/documentService.ts
 import { $api } from './base';
-import { DocumentItem } from '../../entities/document/model/types';
+import { DocumentItem, CreateDocumentDto, DocumentBlock } from '../../entities/document/model/types';
 import { TemplateItem } from '../../entities/document/model/types';
 
 export const documentService = {
@@ -17,14 +17,14 @@ export const documentService = {
   },
 
   // Создать новый
-  async create(payload: { name_doc: string, template_id: number }): Promise<DocumentItem> {
+  async create(payload: CreateDocumentDto): Promise<DocumentItem> {
     const { data } = await $api.post<DocumentItem>('/documents/', payload);
     return data;
   },
 
   // Удалить
-  async delete(doc_id: number): Promise<void> {
-    await $api.delete(`/documents/${doc_id}`);
+  async delete(id: number): Promise<void> {
+    await $api.delete(`/documents/${id}/`);
   },
 
   async getTemplates(): Promise<TemplateItem[]> {
@@ -32,12 +32,8 @@ export const documentService = {
     return data;
   },
 
-  async update(doc_id: number, payload: { 
-    name_doc?: string; 
-    content_json?: any; 
-    latex_source?: string 
-  }): Promise<DocumentItem> {
-    const { data } = await $api.put<DocumentItem>(`/documents/${doc_id}`, payload);
+  async update(doc_id: number, payload: Partial<DocumentItem>): Promise<DocumentItem> {
+    const { data } = await $api.put<DocumentItem>(`/documents/${doc_id}/`, payload);
     return data;
   },
 

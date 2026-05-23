@@ -33,9 +33,10 @@ const DocumentCreate = () => {
       setIsCreating(true);
       // При создании документа отправляем название и ID шаблона
       const newDoc = await documentService.create({
-        name_doc: `Новый документ (${template.name_tmp})`,
-        template_id: template.template_id
-      });
+      name_doc: `Новый документ (${template.name_tmp})`,
+      template_id: template.template_id,
+      content_json: [] // Добавляем пустой массив блоков
+    });
       
       // После создания летим в редактор
       navigate(`/editor/${newDoc.doc_id}`);

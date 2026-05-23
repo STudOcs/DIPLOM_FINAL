@@ -8,10 +8,9 @@ import { TipTapEditor } from '../../features/document-editor/ui/TipTapEditor';
 import { LatexCodeEditor } from '../../features/document-editor/ui/LatexCodeEditor';
 import { useParams } from 'react-router-dom';
 import { Save, Loader2, Check, Play, Download } from 'lucide-react'; // Иконки
-import { DocumentItem } from '../../entities/document/model/types';
+import { DocumentItem, TemplateItem, DocumentBlock } from '../../entities/document/model/types';
 import { documentService } from '../../shared/api/documentService';
 import { FileText } from 'lucide-react';
-import { TemplateItem } from '../../entities/document/model/types';
 import { authService, TitleData } from '../../shared/api/authService';
 import { $api } from '../../shared/api/base'; // Для прямого вызова получения блоба
 
@@ -83,8 +82,9 @@ const DocumentEditor = () => {
 
           setUserData(mappedUserData);
 
-          const initial = docData.content_json?.html || latexToHtml(docData.latex_source, {});
-          setContent(initial);
+          const initial = Array.isArray(docData.content_json) 
+            ? (docData.content_json[0]?.content || '') 
+            : latexToHtml(docData.latex_source, {});
 
           // Если уже скомпилирован — загружаем превью сразу
           if (docData.compilation_status === 'compiled') {
@@ -110,46 +110,83 @@ const DocumentEditor = () => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<DocumentItem | undefined> => { // Добавлен тип возврата
     if (!doc || !id) return;
     setSaveStatus('saving');
 
     try {
-      let finalHtml = '';
-      let finalLatex = '';
-      const currentTemplate = getCurrentTemplate();
+      let finalHtml = isCodeMode ? latexToHtml(content, registry) : content;
+      const currentTemplate = templates.find(t => t.template_id === doc.template_id);
+      
+      const { latex } = isCodeMode 
+        ? { latex: content } 
+        : htmlToLatex(content, registry, currentTemplate?.latex_preambula_tmp, userData);
 
-      if (isCodeMode) {
-        // Если мы в LaTeX моде — сохраняем текст как есть
-        finalLatex = content;
-        finalHtml = latexToHtml(content, registry);
-      } else {
-        // Если в Визуале — РЕКОНСТРУИРУЕМ полный LaTeX с преамбулой
-        const { latex } = htmlToLatex(
-          content, 
-          registry, 
-          currentTemplate?.latex_preambula_tmp, 
-          userData
-        );
-        finalHtml = content;
-        finalLatex = latex;
-      }
+      // Собираем блоки (пока один большой блок текста для простоты)
+      const blocks: DocumentBlock[] = [{
+        id: "main-content",
+        type: "text",
+        content: finalHtml
+      }];
 
-      const updatedDoc = await documentService.update(Number(id), {
-        content_json: { html: finalHtml },
-        latex_source: finalLatex
+      const updatedDoc = await documentService.update(doc.doc_id, {
+        name_doc: doc.name_doc,
+        content_json: blocks,
+        latex_source: latex
       });
 
       setDoc(updatedDoc);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
-      return updatedDoc;
+      return updatedDoc; // Возвращаем объект!
     } catch (err) {
+      console.error(err);
+      setSaveStatus('idle'); // исправлено с 'error'
       alert("Ошибка при сохранении");
-      setSaveStatus('idle');
-      throw err;
+      return undefined;
     }
   };
+
+  // const handleSave = async () => {
+  //   if (!doc || !id) return;
+  //   setSaveStatus('saving');
+
+  //   try {
+  //     let finalHtml = '';
+  //     let finalLatex = '';
+  //     const currentTemplate = getCurrentTemplate();
+
+  //     if (isCodeMode) {
+  //       // Если мы в LaTeX моде — сохраняем текст как есть
+  //       finalLatex = content;
+  //       finalHtml = latexToHtml(content, registry);
+  //     } else {
+  //       // Если в Визуале — РЕКОНСТРУИРУЕМ полный LaTeX с преамбулой
+  //       const { latex } = htmlToLatex(
+  //         content, 
+  //         registry, 
+  //         currentTemplate?.latex_preambula_tmp, 
+  //         userData
+  //       );
+  //       finalHtml = content;
+  //       finalLatex = latex;
+  //     }
+
+  //     const updatedDoc = await documentService.update(Number(id), {
+  //       content_json: { html: finalHtml },
+  //       latex_source: finalLatex
+  //     });
+
+  //     setDoc(updatedDoc);
+  //     setSaveStatus('success');
+  //     setTimeout(() => setSaveStatus('idle'), 2000);
+  //     return updatedDoc;
+  //   } catch (err) {
+  //     alert("Ошибка при сохранении");
+  //     setSaveStatus('idle');
+  //     throw err;
+  //   }
+  // };
 
   // --- Функция опроса статуса ---
   // Внутри DocumentEditor.tsx находим функцию startPollingStatus
@@ -194,23 +231,19 @@ const DocumentEditor = () => {
     if (!doc) return;
     try {
       setIsCompiling(true);
-      // 1. Сохраняем
       const savedDoc = await handleSave();
-      if (!savedDoc) {
+      
+      // Исправлено: теперь TypeScript понимает, что savedDoc существует
+      if (!savedDoc || !savedDoc.doc_id) {
         setIsCompiling(false);
         return;
       }
 
-      // 2. Запускаем компиляцию
       await documentService.compile(savedDoc.doc_id);
-      
-      // 3. Начинаем опрос статуса
       startPollingStatus(savedDoc.doc_id);
-      
     } catch (err) {
       console.error(err);
       setIsCompiling(false);
-      alert("Не удалось запустить компиляцию");
     }
   };
 
@@ -227,22 +260,48 @@ const DocumentEditor = () => {
     }
   };
 
-  const toggleMode = () => {
+  const toggleMode = async () => {
     if (!isCodeMode) {
-      const currentTemplate = getCurrentTemplate();
-      const { latex, newRegistry } = htmlToLatex(
-        content, 
-        registry, 
-        currentTemplate?.latex_preambula_tmp,
-        userData
-      );
-      setRegistry(newRegistry);
-      setContent(latex);
+      try {
+        // Заменяем .id на .doc_id
+        const { data } = await $api.get(`/documents/${doc?.doc_id}/raw_source/`);
+        setContent(data.raw_latex);
+        setIsCodeMode(true);
+      } catch (e) {
+        alert("Бэк еще не отдал LaTeX");
+      }
     } else {
-      setContent(latexToHtml(content, registry));
+      try {
+        // Заменяем .id на .doc_id
+        const { data } = await $api.post(`/documents/${doc?.doc_id}/sync_raw/`, {
+          latex_source: content 
+        });
+        // Если бэк вернул обновленный массив блоков
+        const newHtml = data.content_json[0]?.content || '';
+        setContent(newHtml);
+        setIsCodeMode(false);
+      } catch (e) {
+        alert("Ошибка синхронизации LaTeX");
+      }
     }
-    setIsCodeMode(!isCodeMode);
   };
+
+  // const toggleMode = () => {
+  //   if (!isCodeMode) {
+  //     const currentTemplate = getCurrentTemplate();
+  //     const { latex, newRegistry } = htmlToLatex(
+  //       content, 
+  //       registry, 
+  //       currentTemplate?.latex_preambula_tmp,
+  //       userData
+  //     );
+  //     setRegistry(newRegistry);
+  //     setContent(latex);
+  //   } else {
+  //     setContent(latexToHtml(content, registry));
+  //   }
+  //   setIsCodeMode(!isCodeMode);
+  // };
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-orange-600" /></div>;
 
