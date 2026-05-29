@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Document
+from .models import Document, Template
+
+@admin.register(Template)
+class TemplateAdmin(admin.ModelAdmin):
+    # Поля, которые мы видим в списке всех шаблонов
+    list_display = ('id', 'name', 'description')
+    # Поиск по названию
+    search_fields = ('name',)
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):

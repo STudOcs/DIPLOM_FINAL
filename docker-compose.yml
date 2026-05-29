@@ -30,6 +30,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DEBUG=True
       - CELERY_BROKER_URL=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
     depends_on:
       db:
         condition: service_healthy  # Теперь бэк ждет БД

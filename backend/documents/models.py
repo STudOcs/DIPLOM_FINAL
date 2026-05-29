@@ -46,3 +46,16 @@ class Document(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.owner.username})"
+    
+class Template(models.Model):
+    name = models.CharField("Название шаблона", max_length=255)
+    description = models.TextField("Описание", blank=True)
+    
+    # "скелет" из блоков
+    content_json = models.JSONField("Структура блоков по умолчанию", default=list)
+    
+    # Можно попробовать добавить картинку-превью, чтобы фронт её рисовал
+    # preview_image = models.ImageField(upload_to='templates/', null=True, blank=True)
+
+    def __str__(self):
+        return self.name

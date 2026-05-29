@@ -10,3 +10,4 @@ docker-compose.yml text eol=lf
 requirements.txt text eol=lf
 .gitattributes text eol=lf
 frontend/* text eol=lf
+documents/* text eol=lf
