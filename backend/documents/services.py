@@ -7,11 +7,9 @@ from django.utils import timezone
 
 class LatexService:
     def __init__(self):
-        # Jinja2 для поиска шаблонов
         template_path = os.path.join(settings.BASE_DIR, 'latex_core', 'templates')
         self.env = Environment(
             loader=FileSystemLoader(template_path),
-            # Настройки Jinja2 с синтаксисом LaTeX
             block_start_string='[#',
             block_end_string='#]',
             variable_start_string='[[',
@@ -21,13 +19,24 @@ class LatexService:
 
     def escape_latex(self, text):
         """Экранирование спецсимволов LaTeX"""
-        if not isinstance(text, str): return text
-        conv = {
-            '&': r'\&', '%': r'\%', '$': r'\$', '#': r'\#', '_': r'\_',
-            '{': r'\{', '}': r'\}', '~': r'\textasciitilde{}',
-            '^': r'\textasciicircum{}', '\\': r'\textbackslash{}',
+        if not isinstance(text, str):
+            return text
+
+        # Словарь соответствия спецсимволов их безопасным эквивалентам
+        mapping = {
+            '\\': r'\textbackslash{}',
+            '{':  r'\{',
+            '}':  r'\}',
+            '$':  r'\$',
+            '&':  r'\&',
+            '#':  r'\#',
+            '^':  r'\textasciicircum{}',
+            '_':  r'\_',
+            '~':  r'\textasciitilde{}',
+            '%':  r'\%',
         }
-        return "".join(conv.get(c, c) for c in text)
+        
+        return "".join(mapping.get(c, c) for c in text)
 
     def render_to_string(self, document):
         """Собирает полный код документа из JSON-блоков"""
@@ -67,18 +76,17 @@ class LatexService:
         """Процесс компиляции .tex -> .pdf"""
         latex_code = self.render_to_string(document)
         
-        # Генерируем уникальное имя файла
         file_id = f"doc_{document.id}_{uuid.uuid4().hex[:6]}"
         temp_dir = os.path.join(settings.MEDIA_ROOT, 'latex_temp', file_id)
         os.makedirs(temp_dir, exist_ok=True)
         
         tex_file_path = os.path.join(temp_dir, 'document.tex')
         
-        # Сохраняем код в файл
+        # Сохранение
         with open(tex_file_path, 'w', encoding='utf-8') as f:
             f.write(latex_code)
 
-        # Запуск XeLaTeX (нужно 2 прогона для оглавления)
+        # Запуск XeLaTeX
         try:
             for _ in range(2):
                 result = subprocess.run(

@@ -1,27 +1,43 @@
 from django.contrib import admin
 from .models import Document, Template
 
+
 @admin.register(Template)
 class TemplateAdmin(admin.ModelAdmin):
     # Поля, которые мы видим в списке всех шаблонов
-    list_display = ('id', 'name', 'description')
+    list_display = ("id", "name", "description")
     # Поиск по названию
-    search_fields = ('name',)
+    search_fields = ("name",)
+
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ('title', 'owner', 'lab_number', 'year', 'updated_at')
-    
+    list_display = ("title", "owner", "lab_number", "year", "updated_at")
+
     fieldsets = (
-        (None, {'fields': ('owner', 'title', 'lab_number', 'content_json', 'raw_latex')}),
-        ('Титульный лист', {'fields': (
-            'institute_name', 'chair_name', 
-            ('chair_head_initials', 'chair_head_surname'),
-            ('direction_code', 'direction_name'),
-            'year'
-        )}),
-        ('Проверка', {'fields': (
-            ('supervisor_initials', 'supervisor_surname', 'supervisor_degree'),
-            ('controller_initials', 'controller_surname', 'controller_degree'),
-        )}),
+        (
+            None,
+            {"fields": ("owner", "title", "lab_number", "content_json", "raw_latex")},
+        ),
+        (
+            "Титульный лист",
+            {
+                "fields": (
+                    "institute_name",
+                    "chair_name",
+                    ("chair_head_initials", "chair_head_surname"),
+                    ("direction_code", "direction_name"),
+                    "year",
+                )
+            },
+        ),
+        (
+            "Проверка",
+            {
+                "fields": (
+                    ("supervisor_initials", "supervisor_surname", "supervisor_degree"),
+                    ("controller_initials", "controller_surname", "controller_degree"),
+                )
+            },
+        ),
     )
