@@ -29,6 +29,7 @@ export interface TemplateItem {
 
 export interface DocumentItem {
   doc_id: number;
+  id?: number;
   title: string;
   template_id: number;
   content_json: DocumentBlock[];

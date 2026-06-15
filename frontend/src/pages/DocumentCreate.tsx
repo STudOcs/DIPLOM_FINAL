@@ -28,7 +28,7 @@ const DocumentCreate: React.FC = () => {
     // Имитация создания документа
     setTimeout(() => {
       const newDocId = Math.floor(Math.random() * 1000);
-      navigate(`/document/${newDocId}`);
+      navigate(`/documents/${newDocId}`);
     }, 1500);
   };
 

@@ -36,11 +36,13 @@ const DocumentCreate = () => {
       const newDoc = await documentService.create({
         title: title,
         template_id: tpl.id,
-        lab_number: 1, // дефолт
-        course_name: "Наименование дисциплины" // дефолт
+        lab_number: 1,
+        course_name: "Наименование дисциплины"
       });
 
-      navigate(`/editor/${newDoc.doc_id}`);
+      const documentId = newDoc.doc_id || newDoc.id;
+
+      navigate(`/documents/${documentId}`);
     } catch (e) {
       alert("Ошибка при создании документа");
     }

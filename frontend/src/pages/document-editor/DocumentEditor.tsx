@@ -55,7 +55,10 @@ const DocumentEditor = () => {
 
   // Загрузка данных
   useEffect(() => {
-    if (!id || id === 'undefined') return;
+    if (!id || id === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
 
