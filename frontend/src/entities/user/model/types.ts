@@ -7,24 +7,14 @@ export interface UserProfile {
   last_name: string;
   middle_name: string;
   student_group: string;
-  student_card?: string;   // Сделаем необязательными, чтобы не было ошибок
-  department?: string;     // если их нет в стандартном Djoser
-  registration_date: string; 
-}
-
-export interface UserUpdatePayload {
-  email?: string;
-  password?: string;
-  last_name?: string;
-  first_name?: string;
-  middle_name?: string;
-  group_name?: string;
   student_card?: string;
   department?: string;
+  date_joined?: string;
+  registration_date?: string;
 }
 
+// Данные для формы регистрации (без серверных полей)
 export interface RegisterData {
-  // Поля, которые требует Djoser (POST /api/v1/users/users/)
   username: string;
   email: string;
   password: string;
@@ -33,6 +23,17 @@ export interface RegisterData {
   last_name: string;
   middle_name: string;
   student_group: string;
+}
+
+export interface UserUpdatePayload {
+  email?: string;
+  password?: string;
+  last_name?: string;
+  first_name?: string;
+  middle_name?: string;
+  student_group?: string;
+  student_card?: string;
+  department?: string;
 }
 
 // Данные для обновления (PATCH запрос)

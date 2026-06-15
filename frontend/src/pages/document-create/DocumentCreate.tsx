@@ -18,82 +18,60 @@ const getTemplateIcon = (name: string) => {
 const DocumentCreate = () => {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     documentService.getTemplates()
       .then(setTemplates)
-      .catch(err => console.error("Ошибка загрузки шаблонов:", err))
+      .catch(() => alert("Не удалось загрузить шаблоны"))
       .finally(() => setIsLoading(false));
   }, []);
 
-  const handleSelectTemplate = async (template: TemplateItem) => {
+  const handleSelectTemplate = async (tpl: TemplateItem) => {
     try {
-      setIsCreating(true);
-      // При создании документа отправляем название и ID шаблона
+      // При создании запрашиваем название через prompt для простоты (позже можно сделать модалку)
+      const title = window.prompt("Введите название работы:", `Отчет по ${tpl.name}`);
+      if (!title) return;
+
       const newDoc = await documentService.create({
-      name_doc: `Новый документ (${template.name_tmp})`,
-      template_id: template.template_id,
-      content_json: [] // Добавляем пустой массив блоков
-    });
-      
-      // После создания летим в редактор
+        title: title,
+        template_id: tpl.id,
+        lab_number: 1, // дефолт
+        course_name: "Наименование дисциплины" // дефолт
+      });
+
       navigate(`/editor/${newDoc.doc_id}`);
-    } catch (err) {
+    } catch (e) {
       alert("Ошибка при создании документа");
-      setIsCreating(false);
     }
   };
 
+  if (isLoading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin" /></div>;
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="bg-white border-b border-gray-200 mb-8 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
-          <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full">
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className="text-xl font-bold">Новый документ</h1>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-5xl mx-auto">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 mb-8 hover:text-orange-600">
+          <ArrowLeft size={20} /> Назад
+        </button>
+        <h1 className="text-3xl font-bold mb-2">Выберите тип работы</h1>
+        <p className="text-gray-500 mb-10">Бэкенд автоматически сформирует структуру по стандартам СТУ СФУ</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {templates.map(tpl => (
+            <TemplateCard 
+              key={tpl.id}
+              template={{
+                id: tpl.id.toString(),
+                title: tpl.name,
+                description: tpl.description,
+                icon: 'FileText' // Можешь добавить логику выбора иконок
+              }}
+              onSelect={() => handleSelectTemplate(tpl)}
+            />
+          ))}
         </div>
       </div>
-
-      <main className="max-w-6xl mx-auto px-4">
-        <div className="mb-10">
-          <h2 className="text-2xl font-bold text-gray-900">Выберите шаблон</h2>
-          <p className="text-gray-500">Все шаблоны настроены согласно стандартам СТО СФУ</p>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="animate-spin text-orange-600" size={40} />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((tmp) => (
-              <TemplateCard 
-                key={tmp.template_id}
-                // Мапим данные бэкенда под интерфейс карточки
-                template={{
-                  id: tmp.template_id.toString(),
-                  title: tmp.name_tmp,
-                  description: tmp.definition_tmp,
-                  icon: getTemplateIcon(tmp.name_tmp)
-                }}
-                onSelect={() => handleSelectTemplate(tmp)}
-              />
-            ))}
-          </div>
-        )}
-
-        {isCreating && (
-          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-2xl shadow-xl flex items-center gap-4">
-              <Loader2 className="animate-spin text-orange-600" />
-              <span className="font-medium">Подготовка документа...</span>
-            </div>
-          </div>
-        )}
-      </main>
     </div>
   );
 };

@@ -11,9 +11,8 @@ export const $api = axios.create({
 
 // Интерцептор для автоматической подстановки токена
 $api.interceptors.request.use((config) => {
-    // ВАЖНО: Djoser сохраняет его как access_token (проверь authService)
-    const token = localStorage.getItem('access_token'); 
-    if (token && config.headers) {
+    const token = localStorage.getItem('access_token'); // Djoser JWT
+    if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

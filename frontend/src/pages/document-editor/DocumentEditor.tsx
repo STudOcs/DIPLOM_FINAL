@@ -1,136 +1,139 @@
 // src/pages/document-editor/DocumentEditor.tsx
 import { useState, useRef, useEffect } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, closestCenter } from '@dnd-kit/core';
+import { useParams } from 'react-router-dom';
+import { Save, Loader2, Check, Play, Download, FileText } from 'lucide-react';
 import { htmlToLatex } from '../../shared/lib/latex/htmlToLatex';
 import { latexToHtml } from '../../shared/lib/latex/latexToHtml';
-import { DocumentSidebar } from '../../widgets/document-sidebar/ui/DocumentSidebar';
 import { TipTapEditor } from '../../features/document-editor/ui/TipTapEditor';
 import { LatexCodeEditor } from '../../features/document-editor/ui/LatexCodeEditor';
-import { useParams } from 'react-router-dom';
-import { Save, Loader2, Check, Play, Download } from 'lucide-react'; // Иконки
 import { DocumentItem, TemplateItem, DocumentBlock } from '../../entities/document/model/types';
 import { documentService } from '../../shared/api/documentService';
-import { FileText } from 'lucide-react';
 import { authService, TitleData } from '../../shared/api/authService';
-import { $api } from '../../shared/api/base'; // Для прямого вызова получения блоба
+import { $api } from '../../shared/api/base';
 
 export type ImageRegistry = Record<string, string>; 
 
+const blocksToHtml = (blocks: DocumentBlock[]): string => {
+  return blocks.map(block => {
+    const textContent = block.content?.text || '';
+    if (block.type === 'heading') {
+      const level = block.content?.level || 1;
+      return `<h${level}>${textContent}</h${level}>`;
+    }
+    if (block.type === 'text') {
+      return textContent.startsWith('<') ? textContent : `<p>${textContent}</p>`;
+    }
+    return '';
+  }).join('');
+};
+
 const DocumentEditor = () => {
-  // ЕДИНЫЙ КОНТЕНТ для всего документа
-  const [content, setContent] = useState('<h1>Введение</h1><p>Начните писать...</p>');
-  const [isCodeMode, setIsCodeMode] = useState(false);
-  
-  const [templates, setTemplates] = useState<TemplateItem[]>([]); // Храним шаблоны здесь
-  const [editorInstance, setEditorInstance] = useState<any>(null);
-  const [userData, setUserData] = useState<TitleData | null>(null);
-  const [images, setImages] = useState<ImageRegistry>({});
-  
   const { id } = useParams<{ id: string }>();
+  
+  const [editorInstance, setEditorInstance] = useState<any>(null); 
+  // Состояния данных
   const [doc, setDoc] = useState<DocumentItem | null>(null);
+  const [templates, setTemplates] = useState<TemplateItem[]>([]);
+  const [userData, setUserData] = useState<TitleData | null>(null);
+  const [content, setContent] = useState('');
+  const [registry, setRegistry] = useState<ImageRegistry>({});
+  
+  // Состояния интерфейса
+  const [isCodeMode, setIsCodeMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
-  const [registry, setRegistry] = useState<Record<string, string>>({});
-
-  // --- НОВЫЕ СОСТОЯНИЯ ДЛЯ PDF ---
   const [isCompiling, setIsCompiling] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Пример в DocumentEditor.tsx
-  const { latex, newRegistry } = htmlToLatex(content, registry);
-  // И обратно
-  const html = latexToHtml(content, registry);
-
-  // Сайдбар теперь просто список-заглушка для навигации или вставки
-  const [structure, setStructure] = useState([
-    { id: '1', title: 'Титульный лист', type: 'title' },
-    { id: '2', title: 'Введение', type: 'intro' },
-    { id: '3', title: 'Основная часть', type: 'main' },
-  ]);
-
-  // Вспомогательная функция получения текущего шаблона
-  const getCurrentTemplate = () => {
-    return templates.find(t => t.template_id === doc?.template_id);
-  };
+  useEffect(() => {
+    return () => {
+      if (pollingInterval.current) clearInterval(pollingInterval.current);
+    };
+  }, []);
 
   // Загрузка данных
   useEffect(() => {
-    if (id) {
-      setIsLoading(true);
-      Promise.all([
-        documentService.getById(id),
-        documentService.getTemplates(),
-        authService.getTitleData()
-      ])
-        .then(([docData, templatesData, profile]) => {
-          setDoc(docData);
-          setTemplates(templatesData);
+    if (!id || id === 'undefined') return;
 
+    setIsLoading(true);
+
+    const loadData = async () => {
+      try {
+        // 1. Загружаем то, что ОБЯЗАТЕЛЬНО для работы редактора
+        const [docData, templatesData] = await Promise.all([
+          documentService.getById(id),
+          documentService.getTemplates()
+        ]);
+
+        setDoc(docData);
+        setTemplates(templatesData);
+        
+        const initial = Array.isArray(docData.content_json) && docData.content_json.length > 0
+          ? blocksToHtml(docData.content_json)
+          : (docData.latex_source ? latexToHtml(docData.latex_source, {}) : '');
+        
+        setContent(initial);
+
+        // 2. Загружаем профиль отдельно. Если он упадет — редактор все равно будет работать
+        try {
+          const profile = await authService.getMe();
           const mappedUserData: TitleData = {
-            last_name: profile.last_name,
-            first_name: profile.first_name,
-            middle_name: profile.middle_name,
-            // Генерируем инициалы: "Иванов И. И."
-            initials: `${profile.last_name} ${profile.first_name[0] ? profile.first_name[0] + '.' : ''} ${profile.middle_name[0] ? profile.middle_name[0] + '.' : ''}`.trim(),
-            // Мапим student_group -> group
-            group: profile.student_group,
-            student_card: profile.student_card || '',
-            department: profile.department || ''
+            last_name: profile?.last_name || '',
+            first_name: profile?.first_name || '',
+            middle_name: profile?.middle_name || '',
+            initials: `${profile?.last_name || ''} ${(profile?.first_name?.[0] || '')}.${(profile?.middle_name?.[0] || '')}.`.trim(),
+            group: profile?.student_group || '',
+            student_card: profile?.student_card || '',
+            department: profile?.department || ''
           };
-
           setUserData(mappedUserData);
+        } catch (e) {
+          console.warn("Профиль не загружен, титульник будет пуст", e);
+        }
 
-          const initial = Array.isArray(docData.content_json) 
-            ? (docData.content_json[0]?.content || '') 
-            : latexToHtml(docData.latex_source, {});
+      } catch (err) {
+        console.error("Ошибка загрузки документа:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-          // Если уже скомпилирован — загружаем превью сразу
-          if (docData.compilation_status === 'compiled') {
-            loadPdfPreview(docData.doc_id);
-          }
-        })
-        .catch(err => console.error(err))
-        .finally(() => setIsLoading(false));
-    }
+    loadData();
   }, [id]);
+
 
   // Функция загрузки PDF через Blob (чтобы работала авторизация)
   const loadPdfPreview = async (docId: number) => {
     try {
-      const response = await $api.get(`/documents/${docId}/pdf`, {
-        responseType: 'blob', // Важно!
-      });
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+      const response = await $api.get(`/documents/${docId}/pdf/`, { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       setPdfBlobUrl(url);
     } catch (err) {
-      console.error("Ошибка загрузки PDF файла:", err);
+      console.error("Ошибка загрузки PDF:", err);
     }
   };
 
-  const handleSave = async (): Promise<DocumentItem | undefined> => { // Добавлен тип возврата
+  const handleSave = async (): Promise<DocumentItem | undefined> => {
     if (!doc || !id) return;
     setSaveStatus('saving');
-
     try {
+      const currentTemplate = templates.find(t => t.id === doc.template_id);
       let finalHtml = isCodeMode ? latexToHtml(content, registry) : content;
-      const currentTemplate = templates.find(t => t.template_id === doc.template_id);
-      
+
+      const blocks: DocumentBlock[] = [{
+        id: "main-content",
+        type: "text",
+        content: { text: finalHtml }
+      }];
+
       const { latex } = isCodeMode 
         ? { latex: content } 
         : htmlToLatex(content, registry, currentTemplate?.latex_preambula_tmp, userData);
 
-      // Собираем блоки (пока один большой блок текста для простоты)
-      const blocks: DocumentBlock[] = [{
-        id: "main-content",
-        type: "text",
-        content: finalHtml
-      }];
-
       const updatedDoc = await documentService.update(doc.doc_id, {
-        name_doc: doc.name_doc,
+        title: doc.title,
         content_json: blocks,
         latex_source: latex
       });
@@ -138,58 +141,24 @@ const DocumentEditor = () => {
       setDoc(updatedDoc);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
-      return updatedDoc; // Возвращаем объект!
+      return updatedDoc;
     } catch (err) {
-      console.error(err);
-      setSaveStatus('idle'); // исправлено с 'error'
-      alert("Ошибка при сохранении");
-      return undefined;
+      setSaveStatus('idle');
+      alert("Ошибка сохранения");
     }
   };
 
-  // const handleSave = async () => {
-  //   if (!doc || !id) return;
-  //   setSaveStatus('saving');
-
-  //   try {
-  //     let finalHtml = '';
-  //     let finalLatex = '';
-  //     const currentTemplate = getCurrentTemplate();
-
-  //     if (isCodeMode) {
-  //       // Если мы в LaTeX моде — сохраняем текст как есть
-  //       finalLatex = content;
-  //       finalHtml = latexToHtml(content, registry);
-  //     } else {
-  //       // Если в Визуале — РЕКОНСТРУИРУЕМ полный LaTeX с преамбулой
-  //       const { latex } = htmlToLatex(
-  //         content, 
-  //         registry, 
-  //         currentTemplate?.latex_preambula_tmp, 
-  //         userData
-  //       );
-  //       finalHtml = content;
-  //       finalLatex = latex;
-  //     }
-
-  //     const updatedDoc = await documentService.update(Number(id), {
-  //       content_json: { html: finalHtml },
-  //       latex_source: finalLatex
-  //     });
-
-  //     setDoc(updatedDoc);
-  //     setSaveStatus('success');
-  //     setTimeout(() => setSaveStatus('idle'), 2000);
-  //     return updatedDoc;
-  //   } catch (err) {
-  //     alert("Ошибка при сохранении");
-  //     setSaveStatus('idle');
-  //     throw err;
-  //   }
-  // };
-
-  // --- Функция опроса статуса ---
-  // Внутри DocumentEditor.tsx находим функцию startPollingStatus
+  const handleCompile = async () => {
+    const savedDoc = await handleSave();
+    if (!savedDoc) return;
+    try {
+      setIsCompiling(true);
+      await documentService.compile(savedDoc.doc_id);
+      startPollingStatus(savedDoc.doc_id);
+    } catch (e) {
+      setIsCompiling(false);
+    }
+  };
 
   const startPollingStatus = (docId: number) => {
     if (pollingInterval.current) clearInterval(pollingInterval.current);
@@ -227,26 +196,6 @@ const DocumentEditor = () => {
     }, 2000);
   };
 
-  const handleCompile = async () => {
-    if (!doc) return;
-    try {
-      setIsCompiling(true);
-      const savedDoc = await handleSave();
-      
-      // Исправлено: теперь TypeScript понимает, что savedDoc существует
-      if (!savedDoc || !savedDoc.doc_id) {
-        setIsCompiling(false);
-        return;
-      }
-
-      await documentService.compile(savedDoc.doc_id);
-      startPollingStatus(savedDoc.doc_id);
-    } catch (err) {
-      console.error(err);
-      setIsCompiling(false);
-    }
-  };
-
   const handleDownload = async () => {
     // ВАЖНО: проверяем статус из объекта doc
     if (!doc || doc.compilation_status !== 'success') {
@@ -254,7 +203,7 @@ const DocumentEditor = () => {
       return;
     }
     try {
-      await documentService.downloadPdf(doc.doc_id, doc.name_doc || 'document');
+      await documentService.downloadPdf(doc.doc_id, doc.title || 'document');
     } catch (err) {
       alert("Ошибка при скачивании файла");
     }
@@ -263,7 +212,6 @@ const DocumentEditor = () => {
   const toggleMode = async () => {
     if (!isCodeMode) {
       try {
-        // Заменяем .id на .doc_id
         const { data } = await $api.get(`/documents/${doc?.doc_id}/raw_source/`);
         setContent(data.raw_latex);
         setIsCodeMode(true);
@@ -272,7 +220,6 @@ const DocumentEditor = () => {
       }
     } else {
       try {
-        // Заменяем .id на .doc_id
         const { data } = await $api.post(`/documents/${doc?.doc_id}/sync_raw/`, {
           latex_source: content 
         });
@@ -285,23 +232,6 @@ const DocumentEditor = () => {
       }
     }
   };
-
-  // const toggleMode = () => {
-  //   if (!isCodeMode) {
-  //     const currentTemplate = getCurrentTemplate();
-  //     const { latex, newRegistry } = htmlToLatex(
-  //       content, 
-  //       registry, 
-  //       currentTemplate?.latex_preambula_tmp,
-  //       userData
-  //     );
-  //     setRegistry(newRegistry);
-  //     setContent(latex);
-  //   } else {
-  //     setContent(latexToHtml(content, registry));
-  //   }
-  //   setIsCodeMode(!isCodeMode);
-  // };
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-orange-600" /></div>;
 

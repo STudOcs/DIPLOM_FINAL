@@ -18,13 +18,15 @@ import TaskItem from '@tiptap/extension-task-item';
 import Document from '@tiptap/extension-document';
 
 interface TipTapEditorProps {
-  initialContent?: string;
-  onContentChange?: (content: string) => void;
+  content?: string;
+  onChange?: (content: string) => void;
+  onEditorInit?: (editor: any) => void; // Добавь это
 }
 
 const TipTapEditor: React.FC<TipTapEditorProps> = ({ 
-  initialContent = '<h1>Отчет по учебной практике</h1><h2>Введение</h2><p>Начните вводить текст вашего документа здесь...</p>', 
-  onContentChange 
+  content, 
+  onChange,
+  onEditorInit
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
@@ -118,12 +120,12 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         multicolor: true,
       }),
     ],
-    content: initialContent,
+    content: content,
     onUpdate: ({ editor }) => {
       const newContent = editor.getHTML();
       
-      if (onContentChange) {
-        onContentChange(newContent);
+      if (onChange) {
+        onChange(newContent);
       }
       
       // Разбиваем контент на страницы
@@ -182,10 +184,11 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   // Эффект для инициализации разбиения на страницы
   useEffect(() => {
-    if (editor) {
-      splitContentIntoPages(editor.getHTML());
+    // Если редактор готов, а контент пришел и редактор еще пустой
+    if (editor && content && editor.isEmpty) {
+      editor.commands.setContent(content);
     }
-  }, [editor]);
+  }, [editor, content]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

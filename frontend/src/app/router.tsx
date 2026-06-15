@@ -23,9 +23,9 @@ export const router = createBrowserRouter([
         children: [
             { path: '/dashboard', element: <Dashboard /> },
             { path: '/profile', element: <ProfilePage /> },
-            { path: '/editor/:id', element: <DocumentEditor /> },
+            { path: '/documents/:id', element: <DocumentEditor /> },
             { path: '/create', element: <DocumentCreate /> },
         ]
     },
-    { path: '*', element: <Navigate to="/dashboard" /> }
+    //{ path: '*', element: <Navigate to="/dashboard" /> }
 ]);

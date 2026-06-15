@@ -42,7 +42,7 @@ export const DocumentCard = ({ doc, onClick, onDelete }: DocumentCardProps) => {
       
       <div className="flex-1">
         <h3 className="font-bold text-gray-900 mb-1 line-clamp-2 leading-tight">
-          {doc.name_doc || "Безымянный документ"}
+          {doc.title || "Безымянный документ"}
         </h3>
         <p className="text-xs font-medium text-gray-400 uppercase">
           {getTemplateName(doc.template_id)}
@@ -58,4 +58,4 @@ export const DocumentCard = ({ doc, onClick, onDelete }: DocumentCardProps) => {
       </div>
     </div>
   );
-};
+};  

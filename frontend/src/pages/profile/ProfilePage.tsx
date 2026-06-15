@@ -19,8 +19,9 @@ const ProfilePage = () => {
   useEffect(() => {
     userService.getMe()
       .then(data => {
+        console.log('PROFILE DATA:', data);
         setUser(data);
-        setFormData(data); // Инициализируем форму текущими данными
+        setFormData(data);
       })
       .catch(() => alert("Ошибка загрузки профиля"))
       .finally(() => setIsLoading(false));
@@ -29,18 +30,66 @@ const ProfilePage = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+
     try {
-      // Удаляем пустой пароль, чтобы не менять его на бэкенде
-      const payload = { ...formData };
-      if (!payload.password) delete payload.password;
+      const payload: UserUpdatePayload = {
+        email: formData.email,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        middle_name: formData.middle_name,
+        student_group: formData.student_group,
+        student_card: formData.student_card,
+        department: formData.department,
+      };
+
+      if (formData.password) {
+        payload.password = formData.password;
+      }
+
+      console.log('Отправляем профиль:', payload);
 
       const updated = await userService.updateMe(payload);
+
+      console.log('Профиль после сохранения:', updated);
+
       setUser(updated);
-      alert("Данные успешно сохранены!");
+      setFormData(updated);
+
+      alert('Данные успешно сохранены!');
     } catch (err) {
-      alert("Ошибка при сохранении данных");
+      console.error('Ошибка при сохранении данных:', err);
+      alert('Ошибка при сохранении данных');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const payload = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        middle_name: formData.middle_name,
+        student_group: formData.student_group,
+        student_card: formData.student_card,
+        department: formData.department,
+      };
+
+      console.log('Отправляем профиль:', payload);
+
+      const updatedUser = await userService.updateMe(payload);
+
+      console.log('Профиль обновлён:', updatedUser);
+
+      setUser(updatedUser);
+      setFormData(updatedUser);
+
+      alert('Данные успешно сохранены!');
+    } catch (error) {
+      console.error('Ошибка сохранения профиля:', error);
+      alert('Ошибка сохранения профиля');
     }
   };
 
@@ -73,7 +122,7 @@ const ProfilePage = () => {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Учеба</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Группа" value={formData.group_name || ''} onChange={e => setFormData({...formData, group_name: e.target.value})} />
+              <Input label="Группа" value={formData.student_group || ''} onChange={e => setFormData({...formData, student_group: e.target.value})} />
               <Input label="Номер зачетки" value={formData.student_card || ''} onChange={e => setFormData({...formData, student_card: e.target.value})} />
               <div className="md:col-span-2">
                 <Input label="Кафедра" value={formData.department || ''} onChange={e => setFormData({...formData, department: e.target.value})} />
@@ -88,7 +137,7 @@ const ProfilePage = () => {
               <Input label="Email" type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} />
               <Input label="Новый пароль" type="password" placeholder="Введите для смены" value={formData.password || ''} onChange={e => setFormData({...formData, password: e.target.value})} />
             </div>
-            <p className="mt-4 text-xs text-gray-400 italic">Дата регистрации: {new Date(user?.registration_date || '').toLocaleDateString()}</p>
+            <p className="mt-4 text-xs text-gray-400 italic">Дата регистрации: {user?.date_joined ? new Date(user.date_joined).toLocaleDateString() : '—'}</p>
           </div>
 
           <div className="flex justify-end gap-4 items-center">

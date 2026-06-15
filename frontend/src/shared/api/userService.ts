@@ -5,24 +5,23 @@ import { UserProfile, UpdateProfileDto, UserUpdatePayload } from '../../entities
 export const userService = {
     // Получение данных текущего пользователя
     async getProfile(): Promise<UserProfile> {
-        const { data } = await $api.get<UserProfile>('/user/profile');
+        const { data } = await $api.get<UserProfile>('/user/profile/');
         return data;
     },
 
     // Частичное обновление профиля
     async updateProfile(dto: UpdateProfileDto): Promise<UserProfile> {
-        const { data } = await $api.patch<UserProfile>('/user/profile', dto);
+        const { data } = await $api.patch<UserProfile>('/user/profile/', dto);
         return data;
     },
 
     async getMe(): Promise<UserProfile> {
-        const { data } = await $api.get<UserProfile>('/auth/me');
+        const { data } = await $api.get<UserProfile>('/users/users/me/');
         return data;
     },
 
-    // Обновить данные
     async updateMe(payload: UserUpdatePayload): Promise<UserProfile> {
-        const { data } = await $api.put<UserProfile>('/auth/me', payload);
+        const { data } = await $api.patch<UserProfile>('/users/users/me/', payload);
         return data;
     }
 };

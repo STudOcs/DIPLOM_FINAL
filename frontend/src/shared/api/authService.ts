@@ -1,6 +1,6 @@
 // src/shared/api/authService.ts
 import { $api } from './base';
-import { RegisterData, LoginResponse, UserProfile } from '../../entities/user/model/types';
+import { RegisterData, LoginResponse, UserProfile, UserUpdatePayload } from '../../entities/user/model/types';
 
 export interface TitleData {
   last_name: string;
@@ -30,6 +30,11 @@ export const authService = {
 
     async getMe(): Promise<UserProfile> {
         const { data } = await $api.get<UserProfile>('/users/users/me/');
+        return data;
+    },
+    
+    async updateMe(payload: UserUpdatePayload): Promise<UserProfile> {
+        const { data } = await $api.patch<UserProfile>('/users/users/me/', payload);
         return data;
     },
 

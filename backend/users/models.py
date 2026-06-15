@@ -5,6 +5,8 @@ class User(AbstractUser):
     # Добавляем поля для СФУ
     middle_name = models.CharField("Отчество", max_length=150, blank=True)
     student_group = models.CharField("Группа", max_length=20, blank=True)
+    student_card = models.CharField("Номер зачетки", max_length=50, blank=True)
+    department = models.CharField("Кафедра", max_length=255, blank=True)
     
     # Сделаем email обязательным
     email = models.EmailField("Email", unique=True)

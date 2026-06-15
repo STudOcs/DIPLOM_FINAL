@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../../shared/api/authService';
+import { userService } from '../../../shared/api/userService';
 import { Input } from '../../../shared/ui/Input';
 import { Button } from '../../../shared/ui/Button';
 import { RegisterData } from '../../../entities/user/model/types';
@@ -19,7 +20,7 @@ export const RegisterForm = () => {
     last_name: '',
     middle_name: '',
     student_group: '',
-});
+  });
 
   const handleChange = (field: keyof RegisterData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -37,24 +38,47 @@ export const RegisterForm = () => {
     setError(null);
 
     try {
-      await authService.register(formData);
-      alert('Регистрация прошла успешно! Теперь вы можете войти.');
-      navigate('/login');
+      console.log('REGISTER PAYLOAD:', formData);
+
+      await authService.register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        re_password: formData.re_password,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        middle_name: formData.middle_name,
+        student_group: formData.student_group,
+      });
+
+      await authService.login(formData.email, formData.password);
+
+      await userService.updateMe({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        middle_name: formData.middle_name,
+        student_group: formData.student_group,
+      });
+
+      alert('Регистрация прошла успешно!');
+      navigate('/dashboard');
     } catch (err: any) {
       const serverErrors = err.response?.data;
+
       if (serverErrors) {
-      
-      const errorMessages = Object.entries(serverErrors)
-        .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(' ') : messages}`)
-        .join(' | ');
-      
-      setError(errorMessages);
-    } else {
-      setError('Произошла неизвестная ошибка');
+        const errorMessages = Object.entries(serverErrors)
+          .map(([field, messages]) =>
+            `${field}: ${Array.isArray(messages) ? messages.join(' ') : messages}`
+          )
+          .join(' | ');
+
+        setError(errorMessages);
+      } else {
+        setError('Произошла неизвестная ошибка');
+      }
+    } finally {
+      setIsLoading(false);
     }
-  } finally {
-    setIsLoading(false);
-  }
   };
 
   return (

@@ -103,8 +103,9 @@ DJOSER = {
     "USERNAME_RESET_CONFIRM_URL": "username/reset/confirm/{uid}/{token}",
     "ACTIVATION_URL": "activate/{uid}/{token}",
     "SERIALIZERS": {
-        "user_create": "users.serializers.CustomUserCreateSerializer",  # Сериализатор для регистрации
-        "user": "users.serializers.CustomUserSerializer",  # Для получения данных профиля
+        "user_create": "users.serializers.CustomUserCreateSerializer",
+        #"user_create_password_retype": "users.serializers.CustomUserCreateSerializer",
+        "user": "users.serializers.CustomUserSerializer",
         "current_user": "users.serializers.CustomUserSerializer",
     },
 }

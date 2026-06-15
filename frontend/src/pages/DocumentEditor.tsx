@@ -148,8 +148,8 @@ const DocumentEditor: React.FC = () => {
         {/* Основная область - Редактор */}
         <main className="flex-1 overflow-auto">
           <TipTapEditor 
-            initialContent={docData.content}
-            onContentChange={handleContentChange}
+            content={docData.content}
+            onChange={handleContentChange}
           />
         </main>
       </div>

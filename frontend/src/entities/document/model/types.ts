@@ -1,44 +1,49 @@
 // src/entities/document/model/types.ts
 
-// Алиас для обратной совместимости с компонентом Badge
-export type DocStatus = CompilationStatus | 'draft';
-
-export type BlockType = 'text' | 'image' | 'table' | 'code' | 'heading';
+export type BlockType = 'heading' | 'text' | 'image' | 'table' | 'code' | 'formula' | 'title';
 
 export interface DocumentBlock {
   id: string;
   type: BlockType;
-  content: any;
+  content: {
+    text?: string;
+    level?: number;
+    image_path?: string;
+    caption?: string;
+    width?: number;
+    rows?: any[];
+  };
 }
 
 export type CompilationStatus = 'not_compiled' | 'compiled' | 'success' | 'error' | 'compiling';
 
+export type DocStatus = CompilationStatus | 'draft'; 
+
+export interface TemplateItem {
+  id: number;           // В v1.1 бэк шлет "id"
+  name: string;
+  description: string;
+  content_json: DocumentBlock[];
+  latex_preambula_tmp: string; // Оставляем для генерации LaTeX
+}
+
 export interface DocumentItem {
-  // Django использует id, но если в твоем JSON прилетает doc_id, используй его
-  doc_id: number; 
-  name_doc: string;
+  doc_id: number;
+  title: string;
   template_id: number;
-  content_json: DocumentBlock[]; // Это массив
-  latex_source: string;
+  content_json: DocumentBlock[];
+  latex_source: string; // Обязательное поле для синхронизации
   compilation_status: CompilationStatus;
-  compilation_log: string;
+  compilation_log?: string;
   changes_data_doc: string;
-  creation_data_doc: string;
-  // Поля для создания (из твоей доки)
+  // Поля метаданных
   course_name?: string;
-  lab_number?: string;
-  record_book_number?: string;
+  lab_number?: number;
 }
 
 export interface CreateDocumentDto {
-  name_doc: string; // сопоставим с title
+  title: string;
   template_id: number;
-  content_json: DocumentBlock[];
-}
-
-export interface TemplateItem {
-  template_id: number;
-  name_tmp: string;
-  definition_tmp: string;
-  latex_preambula_tmp: string;
+  lab_number?: number;
+  course_name?: string;
 }

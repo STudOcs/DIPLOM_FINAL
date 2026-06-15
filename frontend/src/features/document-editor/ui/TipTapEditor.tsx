@@ -47,8 +47,10 @@ export const TipTapEditor = ({ content, onChange, onEditorInit }: TipTapEditorPr
   });
 
   useEffect(() => {
-    if (editor) onEditorInit(editor);
-  }, [editor]);
+    if (editor && content && editor.isEmpty) {
+      editor.commands.setContent(content);
+    }
+  }, [editor, content]);
 
   return (
     // flex-col h-full overflow-hidden: контейнер не скроллится

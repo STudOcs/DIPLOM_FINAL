@@ -119,7 +119,7 @@ const Dashboard: React.FC = () => {
               <div className="divide-y divide-gray-200">
                 {recentDocuments.map((doc) => (
                   <div key={doc.id} className="hover:bg-gray-50 transition-colors">
-                    <Link to={`/document/${doc.id}`} className="block">
+                    <Link to={`/documents/${doc.id}`} className="block">
                       <div className="px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className={`p-3 rounded-lg ${
