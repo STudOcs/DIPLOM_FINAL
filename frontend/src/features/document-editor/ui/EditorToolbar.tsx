@@ -73,8 +73,12 @@ export const EditorToolbar = ({ editor }: ToolbarProps) => {
 
   
 
-  const btnClass = (active: boolean) => 
-    `p-2 rounded hover:bg-orange-100 transition-colors ${active ? 'bg-orange-200 text-orange-800' : 'text-gray-600'}`;
+  const btnClass = (active: boolean) =>
+    `p-2 rounded transition-colors ${
+      active
+        ? 'text-orange-600 bg-orange-50'
+        : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+    }`;
 
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 bg-white sticky top-0 z-10">

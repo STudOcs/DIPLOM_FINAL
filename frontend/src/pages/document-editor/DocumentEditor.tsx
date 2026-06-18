@@ -1,7 +1,7 @@
 // src/pages/document-editor/DocumentEditor.tsx
 import { useState, useRef, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Save, Loader2, Check, Play, Download, FileText } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Save, Loader2, Check, Play, Download, FileText, ArrowLeft, FileDown, FileCode2 } from 'lucide-react';
 import { htmlToLatex } from '../../shared/lib/latex/htmlToLatex';
 import { latexToHtml } from '../../shared/lib/latex/latexToHtml';
 import { TipTapEditor } from '../../features/document-editor/ui/TipTapEditor';
@@ -44,6 +44,9 @@ const DocumentEditor = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [isCompiling, setIsCompiling] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const [editorMode, setEditorMode] = useState<'Визуал' | 'LaTeX'>('Визуал');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -158,6 +161,7 @@ const DocumentEditor = () => {
       setIsCompiling(true);
       await documentService.compile(savedDoc.doc_id);
       startPollingStatus(savedDoc.doc_id);
+      setPdfUrl(`http://127.0.0.1:8000/api/v1/documents/${savedDoc.doc_id}/pdf/`);
     } catch (e) {
       setIsCompiling(false);
     }
@@ -238,60 +242,118 @@ const DocumentEditor = () => {
 
   if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-orange-600" /></div>;
 
+  
+
   return (
     // Весь экран: h-screen, запрещаем скролл
     <div className="h-screen flex flex-col overflow-hidden bg-gray-100 font-sans">
       
       {/* Хедер: фиксированный */}
-      <header className="h-14 bg-white border-b flex items-center px-4 shrink-0 justify-between z-50">
-        <div className="font-bold text-orange-600 tracking-tighter text-xl">СФУ.ДОК</div>
-        <div className="flex gap-4 items-center">
-            <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
-              <button 
-                onClick={() => isCodeMode && toggleMode()} 
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${!isCodeMode ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
+      {/* className="h-14 bg-white border-b flex items-center px-4 shrink-0 justify-between z-50" */}
+      <header>
+        <div className="sticky top-0 z-50 bg-white border-b shadow-sm">
+          <div className="max-w-[1800px] mx-auto px-6 h-14 flex items-center justify-between">
+
+            <div className="flex items-center gap-4 min-w-0">
+
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="
+                  flex items-center gap-2
+                  px-3 py-2
+                  rounded-lg
+                  text-gray-700
+                  hover:bg-orange-50
+                  hover:text-orange-600
+                "
               >
-                Визуал
+                <ArrowLeft size={18} />
+                К документам
               </button>
-              <button 
-                onClick={() => !isCodeMode && toggleMode()} 
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${isCodeMode ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
-              >
-                LaTeX
-              </button>
+
+              <div className="w-px h-6 bg-gray-200" />
+
+              <div className="font-medium truncate">
+                {doc?.title}
+              </div>
+
             </div>
 
-            <button 
-              onClick={handleSave}
-              disabled={saveStatus === 'saving'}
-              className="p-2 text-gray-500 hover:text-orange-600 transition-colors"
-            >
-              {saveStatus === 'saving' ? <Loader2 size={20} className="animate-spin" /> : saveStatus === 'success' ? <Check size={20} className="text-green-600" /> : <Save size={20} />}
-            </button>
+            <div className="flex items-center gap-2">
 
-            <button 
-              onClick={handleCompile}
-              disabled={isCompiling || doc?.compilation_status === 'compiling'}
-              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50 shadow-sm"
-            >
-              {isCompiling ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} fill="currentColor" />}
-              {isCompiling ? 'Сборка...' : 'Компиляция'}
-            </button>
+              <div className="flex rounded-lg border overflow-hidden">
 
-            {/* Скачивание */}
-            <button 
-              onClick={handleDownload}
-              // Добавляем проверку на 'success'
-              disabled={!(doc?.compilation_status === 'compiled' || doc?.compilation_status === 'success') || isCompiling}
-              className={`px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${
-                (doc?.compilation_status === 'compiled' || doc?.compilation_status === 'success') && !isCompiling
-                  ? 'bg-gray-800 hover:bg-black text-white cursor-pointer'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-              }`}
-            >
-              <Download size={16} />
-              Скачать PDF
-            </button>
+                <button
+                  onClick={() => setEditorMode('Визуал')}
+                  className={`px-3 py-2 text-sm ${
+                    editorMode === 'Визуал'
+                      ? 'bg-orange-50 text-orange-600'
+                      : 'bg-white text-gray-600'
+                  }`}
+                >
+                  Визуал
+                </button>
+
+                <button
+                  onClick={() => setEditorMode('LaTeX')}
+                  className={`px-3 py-2 text-sm ${
+                    editorMode === 'LaTeX'
+                      ? 'bg-orange-50 text-orange-600'
+                      : 'bg-white text-gray-600'
+                  }`}
+                >
+                  LaTeX
+                </button>
+
+              </div>
+
+              <button
+                onClick={handleSave}
+                className="
+                  flex items-center gap-2
+                  px-3 py-2
+                  rounded-lg
+                  bg-orange-600
+                  text-white
+                  hover:bg-orange-700
+                "
+              >
+                <Save size={16} />
+                Сохранить
+              </button>
+
+              <button
+                onClick={handleCompile}
+                className="
+                  flex items-center gap-2
+                  px-3 py-2
+                  rounded-lg
+                  border
+                  hover:bg-orange-50
+                  hover:text-orange-600
+                "
+              >
+                <FileCode2 size={16} />
+                Компилировать
+              </button>
+
+              <button
+                onClick={handleDownload}
+                className="
+                  flex items-center gap-2
+                  px-3 py-2
+                  rounded-lg
+                  border
+                  hover:bg-orange-50
+                  hover:text-orange-600
+                "
+              >
+                <FileDown size={16} />
+                Скачать PDF
+              </button>
+
+            </div>
+          </div>
         </div>
       </header>
 
@@ -311,7 +373,26 @@ const DocumentEditor = () => {
         {/* Контейнер редактора */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#f8f9fa]">
           
-          {isCodeMode ? (
+
+          <div className="flex-1 overflow-hidden">
+
+            {editorMode === 'Визуал' && (
+              <TipTapEditor 
+                content={content} 
+                onChange={setContent} 
+                onEditorInit={setEditorInstance}
+                pdfUrl={pdfUrl}
+              />
+            )}
+
+            {editorMode === 'LaTeX' && (
+              <div className="h-full flex items-center justify-center text-gray-400">
+                LaTeX режим будет реализован позже
+              </div>
+            )}
+
+          </div>
+          {/* {isCodeMode ? (
             // РЕЖИМ КОДА: свой скролл внутри LatexCodeEditor
             <div className="flex-1 overflow-hidden p-4">
                <LatexCodeEditor code={content} onChange={setContent} />
@@ -323,7 +404,7 @@ const DocumentEditor = () => {
                onChange={setContent} 
                onEditorInit={setEditorInstance} 
             />
-          )}
+          )} */}
           
         </main>
 

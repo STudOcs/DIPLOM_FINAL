@@ -600,3 +600,174 @@ html, body, #root {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+.sfu-document-content {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm 10mm 20mm 30mm;
+  box-sizing: border-box;
+
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14pt;
+  line-height: 1.5;
+  color: #000;
+  background: white;
+}
+
+.sfu-document-content p {
+  margin: 0 0 0.5em 0;
+  text-indent: 12.5mm;
+  text-align: justify;
+}
+
+.sfu-document-content h1 {
+  margin: 0 0 1.5em 0;
+  text-align: center;
+  font-size: 14pt;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.sfu-document-content h2,
+.sfu-document-content h3 {
+  margin: 1.5em 0 1em 0;
+  font-size: 14pt;
+  font-weight: 700;
+  text-align: left;
+}
+
+.sfu-document-content table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 0.5em 0 1em 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+}
+
+.sfu-document-content th,
+.sfu-document-content td {
+  border: 1px solid #000;
+  padding: 4px 6px;
+  vertical-align: top;
+
+  min-width: 40px;
+  max-width: 100%;
+
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.sfu-document-content th {
+  font-weight: 700;
+  text-align: center;
+}
+
+.sfu-document-content td p,
+.sfu-document-content th p {
+  margin: 0;
+  text-indent: 0;
+  text-align: left;
+}
+
+.sfu-document-content th p {
+  text-align: center;
+}
+
+.sfu-document-content .tableWrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.sfu-document-content .tableWrapper table {
+  width: 100%;
+}
+
+.sfu-document-content .resize-cursor {
+  cursor: col-resize;
+}
+
+.sfu-document-content .table-title {
+  text-indent: 0;
+  text-align: left;
+  margin: 1em 0 0.5em 0;
+}
+
+.sfu-document-content figure {
+  margin: 1.5em 0;
+  text-align: center;
+}
+
+.sfu-document-content figure img {
+  max-width: 100%;
+  display: inline-block;
+}
+
+.sfu-document-content figcaption {
+  margin-top: 0.5em;
+  font-size: 14pt;
+  text-align: center;
+}
+
+.sfu-document-content img.ProseMirror-selectednode {
+  outline: 2px solid #2563eb;
+  outline-offset: 4px;
+}
+
+.sfu-document-content .selectedCell::after {
+  background: rgba(234, 88, 12, 0.12);
+}
+
+.sfu-document-content .column-resize-handle {
+  background-color: #ea580c;
+  bottom: -2px;
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 3px;
+  pointer-events: none;
+}
+
+.sfu-document-content .image-placeholder {
+  height: 120px;
+  border: 1px dashed #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+}
+
+.sfu-document-content .tableWrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.sfu-document-content .tableWrapper table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed;
+}
+
+.sfu-document-content table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed;
+}
+
+.sfu-document-content colgroup col {
+  width: auto !important;
+}
+
+.sfu-document-content th,
+.sfu-document-content td {
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
