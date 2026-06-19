@@ -10,27 +10,12 @@ import * as Icons from 'lucide-react';
 
 interface ToolbarProps {
   editor: Editor | null;
+  onOpenTableModal: () => void;
 }
 
-export const EditorToolbar = ({ editor }: ToolbarProps) => {
+export const EditorToolbar = ({ editor, onOpenTableModal }: ToolbarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   if (!editor) return null;
-
-  const addTable = () => {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-  };
-
-  const insertTable = () => {
-    const rows = window.prompt('Количество строк:', '3');
-    const cols = window.prompt('Количество столбцов:', '3');
-    if (rows && cols) {
-      editor.chain().focus().insertTable({ 
-        rows: parseInt(rows), 
-        cols: parseInt(cols), 
-        withHeaderRow: true 
-      }).run();
-    }
-  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,7 +124,11 @@ export const EditorToolbar = ({ editor }: ToolbarProps) => {
 
       <div className="w-px h-6 bg-gray-200 mx-1" />
 
-      <button onClick={insertTable} className="p-2 hover:bg-orange-50 text-gray-600 rounded">
+      <button
+        onClick={onOpenTableModal}
+        className="p-2 hover:bg-orange-50 text-gray-600 rounded"
+        title="Вставить таблицу"
+      >
         <Icons.Table size={18} />
       </button>
 

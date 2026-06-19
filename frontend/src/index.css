@@ -201,11 +201,11 @@ html, body, #root {
 
 /* --- Обычные таблицы в тексте --- */
 .ProseMirror table:not(.latex-signature-table) {
-  border: 1px solid #ced4da;
+  border: 1px solid #000000;
   border-collapse: collapse;
 }
 .ProseMirror table:not(.latex-signature-table) td {
-  border: 1px solid #ced4da;
+  border: 1px solid #000000;
 }
 
 /* Принудительное центрирование титульника */
@@ -372,10 +372,10 @@ html, body, #root {
 
 /* 3. ОБЫЧНЫЕ ТАБЛИЦЫ (в тексте) ПУСТЬ ОСТАЮТСЯ С ГРАНИЦАМИ */
 .ProseMirror table:not(.latex-signature-table) {
-  border: 1px solid #ced4da;
+  border: 1px solid #000000;
 }
 .ProseMirror table:not(.latex-signature-table) td {
-  border: 1px solid #ced4da;
+  border: 1px solid #000000;
 }
 
 .latex-signature-table {
@@ -456,7 +456,7 @@ html, body, #root {
 /* Эти правила применяются только если таблица НЕ внутри титульника */
 .ProseMirror table:not(.signature-table) {
   border-collapse: collapse;
-  border: 1px solid #ced4da;
+  border: 1px solid #000000;
   width: 100%;
 }
 
@@ -528,23 +528,14 @@ html, body, #root {
 /* 4. ОБЫЧНЫЕ ТАБЛИЦЫ (в остальном тексте) */
 .ProseMirror table:not(blockquote table) {
   border-collapse: collapse;
-  border: 1px solid #ced4da;
   width: 100%;
+  border: 1px solid #000;
 }
 
+.ProseMirror table:not(blockquote table) th,
 .ProseMirror table:not(blockquote table) td {
-  border: 1px solid #000000;
-  padding: 4px;
-}
-
-.ProseMirror table:not(blockquote table) tr {
-  border: 1px solid #ced4da;
-  padding: 4px;
-}
-
-.ProseMirror table:not(blockquote table) th {
-  border: 1px solid #ced4da;
-  padding: 4px;
+  border: 1px solid #000;
+  padding: 4px 6px;
 }
 
 /* 5. РАЗРЫВ СТРАНИЦЫ */
@@ -636,60 +627,6 @@ html, body, #root {
   text-align: left;
 }
 
-.sfu-document-content table {
-  width: 100%;
-  max-width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  margin: 0.5em 0 1em 0;
-  font-family: "Times New Roman", Times, serif;
-  font-size: 12pt;
-}
-
-.sfu-document-content th,
-.sfu-document-content td {
-  border: 1px solid #000;
-  padding: 4px 6px;
-  vertical-align: top;
-
-  min-width: 40px;
-  max-width: 100%;
-
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-.sfu-document-content th {
-  font-weight: 700;
-  text-align: center;
-}
-
-.sfu-document-content td p,
-.sfu-document-content th p {
-  margin: 0;
-  text-indent: 0;
-  text-align: left;
-}
-
-.sfu-document-content th p {
-  text-align: center;
-}
-
-.sfu-document-content .tableWrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-.sfu-document-content .tableWrapper table {
-  width: 100%;
-}
-
-.sfu-document-content .resize-cursor {
-  cursor: col-resize;
-}
-
 .sfu-document-content .table-title {
   text-indent: 0;
   text-align: left;
@@ -742,6 +679,57 @@ html, body, #root {
   font-size: 12px;
 }
 
+.sfu-document-content table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 0.5em 0 1em 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+}
+
+.sfu-document-content th,
+.sfu-document-content td {
+  box-sizing: border-box;
+  border: 1px solid #000;
+  padding: 4px 6px;
+  min-width: 60px;
+  vertical-align: top;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.sfu-document-content th {
+  font-weight: 700;
+  text-align: center;
+}
+
+.sfu-document-content td p,
+.sfu-document-content th p {
+  margin: 0;
+  text-indent: 0;
+  text-align: left;
+}
+
+.sfu-document-content th p {
+  text-align: center;
+}
+
+.sfu-document-content .tableWrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.sfu-document-content .tableWrapper table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed;
+}
+
 .sfu-document-content .tableWrapper {
   width: 100%;
   max-width: 100%;
@@ -760,14 +748,136 @@ html, body, #root {
   table-layout: fixed;
 }
 
-.sfu-document-content colgroup col {
-  width: auto !important;
-}
-
 .sfu-document-content th,
 .sfu-document-content td {
   box-sizing: border-box;
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: normal;
+}
+
+.sfu-document-content colgroup col {
+  min-width: 80px;
+}
+
+.sfu-table-resize-handle {
+  position: absolute;
+  z-index: 80;
+  width: 8px;
+  min-width: 8px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize !important;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.sfu-table-resize-handle:hover,
+.sfu-table-resize-handle:active {
+  background: rgba(234, 88, 12, 0.25);
+}
+
+.sfu-document-content table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse;
+}
+
+.sfu-document-content th,
+.sfu-document-content td {
+  box-sizing: border-box;
+  min-width: 45px;
+  cursor: text !important;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.sfu-document-content colgroup col {
+  min-width: 45px;
+}
+
+/* === SFU editor normal tables: final override === */
+
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table),
+.ProseMirror.sfu-document-content .tableWrapper table:not(.latex-signature-table):not(.signature-table) {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  border: 1px solid #000 !important;
+}
+
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) tbody,
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) thead,
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) tr {
+  border: 1px solid #000 !important;
+}
+
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) th,
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) td {
+  border: 1px solid #000 !important;
+  border-color: #000 !important;
+  box-sizing: border-box !important;
+  padding: 4px 6px;
+  min-width: 60px;
+  vertical-align: top;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  background-color: transparent;
+}
+
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) th p,
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) td p {
+  margin: 0;
+  text-indent: 0;
+}
+
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) th {
+  font-weight: 700;
+  text-align: center;
+}
+
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) td {
+  font-weight: 400;
+  text-align: left;
+}
+
+.sfu-document-content .table-title {
+  text-indent: 0;
+  text-align: left;
+  margin: 0 0 2pt 0;
+  padding: 0;
+  font-size: 14pt;
+  line-height: 1.2;
+}
+
+.sfu-document-content .table-title + .tableWrapper,
+.sfu-document-content .table-title + table {
+  margin-top: 0 !important;
+}
+
+.sfu-document-content .table-title::after {
+  content: "";
+}
+
+.ProseMirror.sfu-document-content table:not(.latex-signature-table):not(.signature-table) th {
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 3px double #000 !important;
+}
+
+.sfu-document-content table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 0 0 1em 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
 }

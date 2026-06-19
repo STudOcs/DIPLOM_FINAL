@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -6,6 +6,8 @@ import Image from '@tiptap/extension-image';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
+import { TableInsertModal } from './TableInsertModal';
+
 import {
   Heading1,
   Heading2,
@@ -37,6 +39,8 @@ export const TipTapEditor = ({
   pdfUrl,
 }: TipTapEditorProps) => {
   const [outline, setOutline] = useState<OutlineItem[]>([]);
+  const editorWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [isTableModalOpen, setIsTableModalOpen] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -53,7 +57,7 @@ export const TipTapEditor = ({
       Table.configure({
         resizable: true,
         handleWidth: 5,
-        cellMinWidth: 40,
+        cellMinWidth: 60,
         lastColumnResizable: false,
       }),
       TableRow,
@@ -75,6 +79,7 @@ export const TipTapEditor = ({
       },
     },
     onUpdate: ({ editor }) => {
+      renumberTables(editor);
       onChange(editor.getHTML());
       updateOutline(editor);
     },
@@ -100,12 +105,313 @@ export const TipTapEditor = ({
     setOutline(headings);
   };
 
-  useEffect(() => {
-    if (editor) {
-      onEditorInit(editor);
-      updateOutline(editor);
+  const renumberTables = (editor: Editor) => {
+    const root = editor.view.dom;
+    const titles = Array.from(
+      root.querySelectorAll<HTMLParagraphElement>('p.table-title')
+    );
+
+    titles.forEach((title, index) => {
+      const currentText = title.textContent || '';
+      const name = currentText.replace(/^Таблица\s+\d+\s+[—-]\s*/u, '').trim();
+
+      title.textContent = `Таблица ${index + 1} — ${name || 'Название таблицы'}`;
+    });
+  };
+
+  const getNextTableNumber = () => {
+    if (!editor) return 1;
+
+    const html = editor.getHTML();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    return doc.querySelectorAll('.table-title').length + 1;
+  };
+
+  const insertStandardTable = (data: { title: string; rows: number; cols: number }) => {
+    if (!editor) return;
+
+    const number = getNextTableNumber();
+
+    editor
+      .chain()
+      .focus()
+      .insertContent(`<p class="table-title">Таблица 1 — ${data.title}</p>`)
+      .insertTable({
+        rows: data.rows,
+        cols: data.cols,
+        withHeaderRow: true,
+      })
+      .insertContent('<p></p>')
+      .run();
+  };
+
+  const MIN_TABLE_COLUMN_WIDTH = 80;
+  const TABLE_RESIZE_HANDLE_WIDTH = 8;
+
+  const getEditorRoot = useCallback(() => {
+    return editorWrapperRef.current?.querySelector<HTMLElement>('.sfu-document-content') ?? null;
+  }, []);
+
+  const getEditorTables = useCallback(() => {
+    const root = getEditorRoot();
+
+    if (!root) return [];
+
+    return Array.from(root.querySelectorAll<HTMLTableElement>('table'));
+  }, [getEditorRoot]);
+
+  const shouldSkipTableResize = (table: HTMLTableElement) => {
+    return (
+      table.classList.contains('latex-signature-table') ||
+      table.classList.contains('signature-table') ||
+      Boolean(table.closest('[data-type="titlepage"]')) ||
+      Boolean(table.closest('.latex-title-page')) ||
+      Boolean(table.closest('blockquote'))
+    );
+  };
+
+  const getFirstTableRow = (table: HTMLTableElement) => {
+    return Array.from(table.rows).find(row => row.cells.length > 0) ?? null;
+  };
+
+  const getColumnWidths = (table: HTMLTableElement): number[] => {
+    const firstRow = getFirstTableRow(table);
+
+    if (!firstRow) return [];
+
+    const cells = Array.from(firstRow.cells);
+    const tableWidth = table.getBoundingClientRect().width;
+
+    const cols = Array.from(table.querySelectorAll<HTMLTableColElement>('col'));
+
+    let widths =
+      cols.length === cells.length
+        ? cols.map(col => parseFloat(col.style.width))
+        : [];
+
+    const hasValidWidths =
+      widths.length === cells.length &&
+      widths.every(width => Number.isFinite(width) && width > 0);
+
+    if (!hasValidWidths) {
+      widths = cells.map(cell => cell.getBoundingClientRect().width);
     }
-  }, [editor, onEditorInit]);
+
+    const sum = widths.reduce((acc, width) => acc + width, 0);
+
+    if (sum > 0 && Math.abs(sum - tableWidth) > 1) {
+      widths = widths.map(width => (width / sum) * tableWidth);
+    }
+
+    return widths;
+  };
+
+  const getMinColumnWidth = (table: HTMLTableElement, columnCount: number) => {
+    const tableWidth = table.getBoundingClientRect().width;
+
+    return Math.max(
+      45,
+      Math.min(MIN_TABLE_COLUMN_WIDTH, Math.floor(tableWidth / columnCount) - 4),
+    );
+  };
+
+  useEffect(() => {
+    const wrapper = editorWrapperRef.current;
+
+    if (!wrapper || !editor) return;
+
+    const MIN_COL_WIDTH = 80;
+    const HANDLE_WIDTH = 8;
+
+    let handles: HTMLDivElement[] = [];
+
+    const clearHandles = () => {
+      handles.forEach(handle => handle.remove());
+      handles = [];
+    };
+
+    const getTables = () => {
+      return Array.from(
+        wrapper.querySelectorAll<HTMLTableElement>('.sfu-document-content table'),
+      );
+    };
+
+    const getTableColumnCount = (table: HTMLTableElement) => {
+      const firstRow = Array.from(table.rows).find(row => row.cells.length > 0);
+
+      return firstRow?.cells.length ?? 0;
+    };
+
+    const getColumnWidths = (table: HTMLTableElement) => {
+      const columnCount = getTableColumnCount(table);
+
+      if (columnCount === 0) return [];
+
+      const tableWidth = table.getBoundingClientRect().width;
+      const cols = Array.from(table.querySelectorAll<HTMLTableColElement>('col'));
+
+      let widths =
+        cols.length === columnCount
+          ? cols.map(col => Number.parseFloat(col.style.width))
+          : [];
+
+      const hasInvalidWidth =
+        widths.length !== columnCount ||
+        widths.some(width => !Number.isFinite(width) || width <= 0);
+
+      if (hasInvalidWidth) {
+        widths = Array.from({ length: columnCount }, () => tableWidth / columnCount);
+      }
+
+      const sum = widths.reduce((acc, width) => acc + width, 0);
+
+      if (sum > 0 && Math.abs(sum - tableWidth) > 1) {
+        widths = widths.map(width => (width / sum) * tableWidth);
+      }
+
+      return widths;
+    };
+
+    const applyWidths = (table: HTMLTableElement, widths: number[]) => {
+      let colgroup = table.querySelector('colgroup');
+
+      if (!colgroup) {
+        colgroup = document.createElement('colgroup');
+        table.prepend(colgroup);
+      }
+
+      colgroup.innerHTML = '';
+
+      widths.forEach(width => {
+        const col = document.createElement('col');
+
+        col.style.width = `${Math.round(width)}px`;
+        colgroup?.appendChild(col);
+      });
+
+      table.style.width = '100%';
+      table.style.maxWidth = '100%';
+      table.style.tableLayout = 'fixed';
+    };
+
+    const updateHandlePosition = (
+      handle: HTMLDivElement,
+      table: HTMLTableElement,
+      widths: number[],
+      columnIndex: number,
+    ) => {
+      const tableRect = table.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+
+      const leftOffset = widths
+        .slice(0, columnIndex + 1)
+        .reduce((acc, width) => acc + width, 0);
+
+      handle.style.left = `${
+        tableRect.left - wrapperRect.left + leftOffset - HANDLE_WIDTH / 2
+      }px`;
+      handle.style.top = `${tableRect.top - wrapperRect.top}px`;
+      handle.style.height = `${tableRect.height}px`;
+    };
+
+    const buildHandles = () => {
+      clearHandles();
+
+      getTables().forEach((table, tableIndex) => {
+        const widths = getColumnWidths(table);
+
+        if (widths.length < 2) return;
+
+        applyWidths(table, widths);
+
+        widths.slice(0, -1).forEach((_, columnIndex) => {
+          const handle = document.createElement('div');
+
+          handle.className = 'sfu-table-resize-handle';
+          handle.dataset.tableIndex = String(tableIndex);
+          handle.dataset.columnIndex = String(columnIndex);
+
+          updateHandlePosition(handle, table, widths, columnIndex);
+
+          handle.addEventListener('mousedown', event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const startX = event.clientX;
+            const startWidths = getColumnWidths(table);
+
+            const leftStartWidth = startWidths[columnIndex];
+            const rightStartWidth = startWidths[columnIndex + 1];
+
+            if (!leftStartWidth || !rightStartWidth) return;
+
+            const pairWidth = leftStartWidth + rightStartWidth;
+
+            if (pairWidth < MIN_COL_WIDTH * 2) return;
+
+            const onMouseMove = (moveEvent: MouseEvent) => {
+              moveEvent.preventDefault();
+
+              const delta = moveEvent.clientX - startX;
+
+              let nextLeftWidth = leftStartWidth + delta;
+
+              nextLeftWidth = Math.max(MIN_COL_WIDTH, nextLeftWidth);
+              nextLeftWidth = Math.min(pairWidth - MIN_COL_WIDTH, nextLeftWidth);
+
+              const nextRightWidth = pairWidth - nextLeftWidth;
+
+              const nextWidths = [...startWidths];
+
+              nextWidths[columnIndex] = nextLeftWidth;
+              nextWidths[columnIndex + 1] = nextRightWidth;
+
+              applyWidths(table, nextWidths);
+              updateHandlePosition(handle, table, nextWidths, columnIndex);
+            };
+
+            const onMouseUp = () => {
+              document.removeEventListener('mousemove', onMouseMove);
+              document.removeEventListener('mouseup', onMouseUp);
+
+              const finalWidths = getColumnWidths(table);
+
+              applyWidths(table, finalWidths);
+
+              onChange(editor.getHTML());
+
+              requestAnimationFrame(buildHandles);
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+          });
+
+          wrapper.appendChild(handle);
+          handles.push(handle);
+        });
+      });
+    };
+
+    buildHandles();
+
+    const rebuildAfterEditorUpdate = () => {
+      requestAnimationFrame(buildHandles);
+    };
+
+    editor.on('update', rebuildAfterEditorUpdate);
+    editor.on('selectionUpdate', rebuildAfterEditorUpdate);
+
+    window.addEventListener('resize', buildHandles);
+
+    return () => {
+      editor.off('update', rebuildAfterEditorUpdate);
+      editor.off('selectionUpdate', rebuildAfterEditorUpdate);
+      window.removeEventListener('resize', buildHandles);
+      clearHandles();
+    };
+  }, [editor, onChange]);
 
   const scrollToHeading = (pos: number) => {
     if (!editor) return;
@@ -151,18 +457,7 @@ export const TipTapEditor = ({
     if (!editor) return;
 
     if (type === 'table') {
-      editor
-        .chain()
-        .focus()
-        .insertContent('<p class="table-title">Таблица 1 – Название таблицы</p>')
-        .insertTable({
-          rows: 3,
-          cols: 3,
-          withHeaderRow: true,
-        })
-        .insertContent('<p></p>')
-        .run();
-
+      setIsTableModalOpen(true);
       return;
     }
 
@@ -259,17 +554,22 @@ export const TipTapEditor = ({
       <main className="overflow-hidden flex flex-col min-w-[900px]">
         <div className="sticky top-0 z-30 bg-gray-100 pt-3">
           <div className="mx-auto w-[210mm] bg-white border shadow-sm">
-            <EditorToolbar editor={editor} />
+            <EditorToolbar
+              editor ={editor}
+              onOpenTableModal={() => setIsTableModalOpen(true)}
+            />
           </div>
         </div>
 
         <div className="flex-1 overflow-auto py-8 px-10">
           <div
-            className="mx-auto w-[210mm] min-h-[297mm] bg-white border border-gray-300 shadow-sm"
+            ref={editorWrapperRef}
+            className="mx-auto w-[210mm] min-h-[297mm] bg-white border border-gray-300 shadow-sm relative"
             onDragOver={e => e.preventDefault()}
             onDrop={handleDropBlock}
           >
             <EditorContent editor={editor} />
+
           </div>
         </div>
       </main>
@@ -295,6 +595,11 @@ export const TipTapEditor = ({
           )}
         </div>
       </aside>
+      <TableInsertModal
+        open={isTableModalOpen}
+        onClose={() => setIsTableModalOpen(false)}
+        onInsert={insertStandardTable}
+      />
     </div>
   );
 };
