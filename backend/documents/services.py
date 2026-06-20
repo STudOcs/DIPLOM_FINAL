@@ -3,6 +3,7 @@ import subprocess
 import uuid
 import shutil
 import copy
+import re
 from urllib.parse import urlparse, unquote
 from jinja2 import Environment, FileSystemLoader
 from django.conf import settings
@@ -30,26 +31,73 @@ class LatexService:
         return "".join(conv.get(c, c) for c in text)
 
     def render_blocks(self, document, blocks=None):
-        """Превращает JSON-блоки в одну строку LaTeX кода"""
+        """Превращает JSON-блоки в одну строку LaTeX кода с МАРКЕРАМИ"""
         blocks_tex = []
-        # Используем переданные блоки (подготовленные с локальными путями) 
-        # или блоки напрямую из документа
         source_blocks = blocks if blocks is not None else document.content_json
+        
+        if not source_blocks:
+            return ""
 
         for index, block in enumerate(source_blocks):
             try:
-                template_name = f"blocks/{block['type']}.j2"
-                ctx = {
-                    'block_id': block.get('id', index),
-                    **block.get('content', {})
-                }
-                # Экранируем текст для обычных блоков
-                if block['type'] == 'text' and 'text' in ctx:
-                    ctx['text'] = self.escape_latex(ctx['text'])
+                b_type = block.get('type')
+                b_id = block.get('id', f"auto_{index}")
                 
-                blocks_tex.append(self.env.get_template(template_name).render(**ctx))
+                template_name = f"blocks/{b_type}.j2"
+                # Копируем контент, чтобы не мутировать исходный JSON
+                block_content = copy.deepcopy(block.get('content', {}))
+                
+                # --- ЛОГИКА ДЛЯ КАРТИНОК В RAW РЕДАКТОРЕ ---
+                if b_type == 'image' and not block_content.get('image_path'):
+                    # Если мы просто смотрим код и нет локального пути, 
+                    # вытаскиваем имя файла из URL для отображения
+                    img_url = block_content.get('url') or block_content.get('src')
+                    if img_url:
+                        # Превращаем http://.../media/2/photo.png в photo.png
+                        block_content['image_path'] = os.path.basename(urlparse(img_url).path)
+                    else:
+                        block_content['image_path'] = "placeholder.png"
+                
+                if b_type == 'table':
+                    if 'rows' in block_content:
+                        # Экранируем каждую ячейку в каждом ряду
+                        raw_rows = block_content['rows']
+                        escaped_rows = []
+                        for row in raw_rows:
+                            escaped_rows.append([self.escape_latex(str(cell)) for cell in row])
+                        
+                        if escaped_rows:
+                            # 1. Шапка
+                            block_content['header_row'] = " & ".join(escaped_rows[0])
+                            
+                            # 2. Тело
+                            if len(escaped_rows) > 1:
+                                body_parts = [" & ".join(r) for r in escaped_rows[1:]]
+                                # Обязательно завершаем каждую строку символом \\
+                                block_content['body_rows'] = " \\\\\n        ".join(body_parts) + " \\\\"
+                            else:
+                                block_content['body_rows'] = ""
+
+                ctx = {
+                    'block_id': b_id,
+                    **block_content
+                }
+
+                if b_type == 'text' and 'text' in ctx:
+                    ctx['text'] = self.escape_latex(ctx['text'])
+
+                # Рендерим
+                rendered_content = self.env.get_template(template_name).render(**ctx)
+
+                block_with_markers = (
+                    f"\n% [BLOCK_ID:{b_id}:TYPE:{b_type}]\n"
+                    f"{rendered_content}"
+                    f"\n% [BLOCK_END:{b_id}]\n"
+                )
+                blocks_tex.append(block_with_markers)
+                
             except Exception as e:
-                blocks_tex.append(f"\n% Ошибка блока {block.get('type')}: {str(e)}\n")
+                blocks_tex.append(f"\n% Ошибка рендеринга блока {block.get('type', 'unknown')}: {str(e)}\n")
         
         return "\n".join(blocks_tex)
 
@@ -173,3 +221,143 @@ class LatexService:
                 content["caption"] = f"Ошибка загрузки: {str(e)}"
         
         return prepared_blocks
+    
+    def sync_raw_to_json(self, document, full_raw_latex):
+        """
+        Принимает полную строку LaTeX и обновляет контент блоков в document.content_json
+        """
+        pattern = r'% \[BLOCK_ID:(?P<id>.*?):TYPE:(?P<type>.*?)\](?P<inner_content>.*?)% \[BLOCK_END:(?P=id)\]'
+        matches = re.finditer(pattern, full_raw_latex, re.DOTALL)
+        
+        # Создаем словарь существующих блоков для быстрого доступа (чтобы сохранить S3 пути)
+        existing_blocks = {str(b['id']): b for b in document.content_json}
+        updated_blocks = []
+        
+        for match in matches:
+            b_id = match.group('id')
+            b_type = match.group('type')
+            inner = match.group('inner_content').strip()
+            
+            # Достаем старый контент блока (если он был), чтобы не потерять ссылки на S3
+            old_block = existing_blocks.get(b_id, {})
+            old_content = old_block.get('content', {})
+            
+            # Вызываем парсер конкретного контента
+            block_content = self._parse_block_content(b_type, inner, old_content)
+            
+            updated_blocks.append({
+                "id": b_id,
+                "type": b_type,
+                "content": block_content
+            })
+            
+        document.content_json = updated_blocks
+        return document
+
+    def _parse_block_content(self, b_type, inner, old_content):
+        """
+        Разбирает внутренний код LaTeX для конкретного типа блока.
+        old_content нужен для сохранения путей к файлам, которые нельзя менять из кода.
+        """
+        if b_type == 'text':
+            return {"text": self.unescape_latex(inner).strip()}
+            
+        elif b_type == 'heading':
+            # Ищем текст внутри \chapter{...}, \section{...} или \subsection{...}
+            match = re.search(r'\\(?:chapter|section|subsection)\s*{(.*?)}', inner, re.DOTALL)
+            # Определяем уровень заголовка
+            level = 1
+            if r'\section' in inner: level = 2
+            if r'\subsection' in inner: level = 3
+            
+            return {
+                "text": match.group(1).strip() if match else inner.strip(), 
+                "level": level
+            }
+
+        elif b_type == 'image':
+            # 1. Вытаскиваем ширину из [width=0.6\textwidth]
+            width_match = re.search(r'width\s*=\s*([\d\.]+)', inner)
+            # 2. Вытаскиваем подпись из \caption{...}
+            caption_match = re.search(r'\\caption\s*{(.*?)}', inner, re.DOTALL)
+            
+            # Формируем обновленный контент
+            return {
+                # Сохраняем ссылки на S3 из старого контента
+                "url": old_content.get("url", ""),
+                "image_path": old_content.get("image_path", ""),
+                # Обновляем то, что юзер мог поменять в коде
+                "caption": caption_match.group(1).strip() if caption_match else old_content.get("caption", ""),
+                "width": float(width_match.group(1)) if width_match else old_content.get("width", 0.8)
+            }
+
+        elif b_type == 'table':
+            # 1. Вытаскиваем заголовок
+            caption_match = re.search(r'\\caption\s*{(.*?)}', inner, re.DOTALL)
+            
+            # 2. ИСПРАВЛЕННЫЙ REGEX: пропускаем первый аргумент {..} и берем второй
+            col_spec_match = re.search(r'\\begin{tabularx}\s*{.*?}\s*{(.*?)}', inner, re.DOTALL)
+            
+            # 3. Вытаскиваем строки между \toprule и \bottomrule
+            content_match = re.search(r'\\toprule(.*?)\\bottomrule', inner, re.DOTALL)
+            
+            rows = []
+            if content_match:
+                raw_content = content_match.group(1).strip()
+                raw_content = raw_content.replace(r'\midrule', '') # Убираем разделитель
+                
+                # Делим на строки
+                raw_rows = [r.strip() for r in raw_content.split(r'\\') if r.strip()]
+                
+                for row in raw_rows:
+                    # Делим на ячейки
+                    cells = [self.unescape_latex(c.strip()) for c in row.split('&')]
+                    rows.append(cells)
+
+            return {
+                "caption": caption_match.group(1).strip() if caption_match else "Таблица",
+                "column_spec": col_spec_match.group(1).strip() if col_spec_match else "|X|X|",
+                "rows": rows
+            }
+
+        # Для блоков, которые мы еще не реализовали (таблицы и т.д.)
+        return old_content if old_content else {"raw_inner": inner}
+
+    def unescape_latex(self, text):
+        """Обратное превращение спецсимволов LaTeX в обычные (для текста)"""
+        conv = {
+            r'\&': '&', r'\%': '%', r'\$': '$', r'\#': '#', r'\_': '_',
+            r'\{': '{', r'\}': '}', r'\textasciitilde{}': '~',
+            r'\textasciicircum{}': '^', r'\textbackslash{}': '\\',
+        }
+        # Сортируем ключи по длине, чтобы сначала заменять длинные (типа \textbackslash)
+        for key in sorted(conv.keys(), key=len, reverse=True):
+            text = text.replace(key, conv[key])
+        return text
+
+    def render_to_string(self, document, blocks=None):
+        """Собирает весь проект в одну строку для RAW-редактора или отладки"""
+        # 1. Рендерим блоки (используем переданные или из документа)
+        blocks_content = self.render_blocks(document, blocks=blocks) or ""
+
+        # 2. Рендерим титульный лист
+        title_template = self.env.get_template('vkr_sfu/title.j2')
+        title_page_code = title_template.render(doc=document, user=document.owner)
+
+        # 3. Сборка финального кода
+        main_template = self.env.get_template('vkr_sfu/main.j2')
+        full_code = main_template.render(
+            doc=document,
+            user=document.owner,
+            blocks_content=blocks_content,
+            title_page_content=title_page_code
+        )
+        
+        if r'\input{title.tex}' in full_code:
+            full_code = full_code.replace(r'\input{title.tex}', title_page_code)
+            
+        return full_code
+
+    def get_raw_code(self, document):
+        """Возвращает полную строку LaTeX кода для RAW-редактора"""
+        return self.render_to_string(document)

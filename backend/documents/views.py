@@ -2,11 +2,13 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.conf import settings
+from django.core.files.storage import default_storage
+
 from .models import Document, Template
 from .serializers import DocumentSerializer, TemplateSerializer
 from .services import LatexService
-from django.core.files.storage import default_storage
 from .tasks import compile_pdf_task
+
 
 class TemplateViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -24,12 +26,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Пользователь видит только свои документы
         return Document.objects.filter(owner=self.request.user)
 
     def perform_create(self, serializer):
-        # 1. Смотрим, прислал ли фронт template_id
-        template_id = serializer.validated_data.pop('template_id', None)
+        template_id = serializer.validated_data.pop("template_id", None)
         content_json = []
 
         if template_id:
@@ -39,7 +39,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
             except Template.DoesNotExist:
                 pass
 
-        # 4. Сохраняем документ, принудительно подставляя владельца и контент
         serializer.save(owner=self.request.user, content_json=content_json)
 
     @action(detail=True, methods=["post"])
@@ -68,22 +67,21 @@ class DocumentViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_202_ACCEPTED,
         )
-    
+
     @action(detail=True, methods=["get"], url_path="status")
     def compile_status(self, request, pk=None):
         document = self.get_object()
 
         pdf_url = None
+
         if document.pdf_file:
-            pdf_url = None
-            if document.pdf_file:
-                pdf_url = default_storage.url(document.pdf_file)
+            pdf_url = default_storage.url(document.pdf_file)
 
-                internal = getattr(settings, "AWS_S3_ENDPOINT_URL", "")
-                public = getattr(settings, "AWS_S3_PUBLIC_ENDPOINT_URL", internal)
+            internal = getattr(settings, "AWS_S3_ENDPOINT_URL", "")
+            public = getattr(settings, "AWS_S3_PUBLIC_ENDPOINT_URL", internal)
 
-                if internal and public and pdf_url.startswith(internal):
-                    pdf_url = pdf_url.replace(internal, public, 1)
+            if internal and public and pdf_url.startswith(internal):
+                pdf_url = pdf_url.replace(internal, public, 1)
 
         return Response(
             {
@@ -95,3 +93,29 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 "compiled_at": document.compiled_at,
             }
         )
+
+    @action(detail=True, methods=["get"], url_path="raw_code")
+    def raw_code(self, request, pk=None):
+        document = self.get_object()
+        service = LatexService()
+        code = service.get_raw_code(document)
+
+        return Response({"raw_latex": code})
+
+    @action(detail=True, methods=["post"], url_path="sync_code")
+    def sync_code(self, request, pk=None):
+        document = self.get_object()
+        raw_latex = request.data.get("raw_latex")
+
+        if not raw_latex:
+            return Response(
+                {"error": "No code provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        service = LatexService()
+        document = service.sync_raw_to_json(document, raw_latex)
+        document.save()
+
+        serializer = self.get_serializer(document)
+        return Response(serializer.data)
