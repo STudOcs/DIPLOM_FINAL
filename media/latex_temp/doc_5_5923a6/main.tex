@@ -1,0 +1,75 @@
+% Основной файл-сборщик ВКР СФУ
+\documentclass[paper=a4, fontsize=14pt, pagesize, DIV=calc, oneside]{scrreport}
+
+% 1. БАЗОВЫЕ ПАКЕТЫ ШРИФТОВ И ЯЗЫКА
+\usepackage{metalogo}
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\defaultfontfeatures{Ligatures=TeX} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Courier New}
+
+% 2. ГЕОМЕТРИЯ И СЧЕТЧИКИ (Загружаем ПЕРЕД dop.tex)
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}
+\usepackage[figure,table]{totalcount}
+\usepackage{totcount}
+\usepackage{totpages}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[fleqn]{amsmath}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage[colorlinks]{hyperref}
+
+% 3. БИБЛИОГРАФИЯ (Важно загрузить ДО dop.tex, т.к. там настройки biblatex)
+\usepackage[
+    backend=biber,
+    style=gost-numeric,
+    sorting=none,
+    language=autobib,
+    autolang=other
+]{biblatex}
+\addbibresource{mybibliography.bib}
+
+% 4. ПОДКЛЮЧАЕМ НАСТРОЙКИ ПРЕПОДАВАТЕЛЯ
+% Теперь все \setlist и \titleformat внутри этих файлов сработают верно
+\input{common.tex}
+\input{dop.tex}
+
+% Настройки KOMA-Script
+\KOMAoptions{fontsize=14, numbers=noendperiod, abstract=on, toc=chapterentrydotfill}
+
+\begin{document}
+\pagestyle{empty} 
+
+% Рендерим динамические листы
+\input{title.tex}
+\input{task.tex}
+\input{plan.tex}
+\input{referate.tex}
+
+\newpage
+\tableofcontents
+\newpage
+
+\pagestyle{plain}
+\setcounter{page}{5} 
+
+% ОСНОВНОЙ КОНТЕНТ (Блоки из конструктора)
+% [BLOCK_START:block_1:TYPE:heading]
+\chapter{ Обзор технологий }
+
+% [BLOCK_END:block_1]
+% [BLOCK_START:block_2:TYPE:text]
+В данном разделе рассматривается использование Django и Docker для автоматизации верстки...
+% [BLOCK_END:block_2]
+
+\newpage
+\printbibliography[heading=bibintoc, title={Список использованных источников}]
+
+\end{document}

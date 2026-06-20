@@ -1,0 +1,84 @@
+% --- ОБЩИЕ НАСТРОЙКИ ТЕКСТА ---
+\onehalfspacing
+\setlength{\parindent}{1.25cm} % Абзацный отступ
+
+% Улучшенное выравнивание по ширине
+\sloppy 
+\hyphenpenalty=1000 
+\tolerance=2000
+
+% --- ФИКС РАЗМЕРОВ ЗАГОЛОВКОВ (Убираем ОГРОМНЫЙ текст) ---
+% disposition — это база для всех заголовков
+\setkomafont{disposition}{\rmfamily\bfseries\normalsize}
+\setkomafont{chapter}{\bfseries\normalsize}
+\setkomafont{section}{\bfseries\normalsize}
+\setkomafont{subsection}{\bfseries\normalsize}
+
+% Настройка оглавления (чтобы само слово СОДЕРЖАНИЕ не было гигантским)
+\setkomafont{chapterentry}{\normalfont\normalsize}
+\setkomafont{chapterentrypagenumber}{\normalfont\normalsize}
+
+% --- НАСТРОЙКА ОГЛАВЛЕНИЯ ---
+\renewcaptionname{russian}{\contentsname}{\bfseries СОДЕРЖАНИЕ}
+\BeforeTOCHead[toc]{
+    \renewcommand*{\raggedsection}{\centering}
+    \setkomafont{chapter}{\bfseries\normalsize} % Принудительно для заголовка TOC
+}
+
+% --- НАСТРОЙКА ОТСТУПОВ (1.25 СМ) ---
+\KOMAoptions{numbers=noendperiod}
+
+% Настраиваем отступы для всех уровней, включая главы
+\RedeclareSectionCommand[
+    indent=1.25cm, 
+    beforeskip=-1sp, % Минимальный отступ сверху
+    afterskip=6pt
+]{chapter}
+
+\RedeclareSectionCommand[
+    indent=1.25cm, 
+    beforeskip=12pt, 
+    afterskip=6pt
+]{section}
+
+\RedeclareSectionCommand[
+    indent=1.25cm, 
+    beforeskip=12pt, 
+    afterskip=6pt
+]{subsection}
+
+% --- СПИСКИ (enumitem) ---
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% --- ПОДПИСИ И ТАБЛИЦЫ ---
+\captionsetup{justification=centering, singlelinecheck=false}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+% --- ЛИСТИНГИ КОДА ---
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    texcl=true,
+    frame=none
+}
+
+\DefineBibliographyStrings{russian}{
+	urlseen = {дата обращения:},
+}

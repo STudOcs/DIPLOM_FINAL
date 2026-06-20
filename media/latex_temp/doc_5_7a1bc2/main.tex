@@ -1,0 +1,48 @@
+\documentclass[paper=a4, fontsize=14pt, pagesize, DIV=calc, oneside]{scrreport}
+
+% ШРИФТЫ
+\usepackage{metalogo}
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Courier New}
+
+% ИНТЕРВАЛЫ И ГЕОМЕТРИЯ
+\usepackage{setspace} 
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}
+
+% ГРАФИКА И СЧЕТЧИКИ
+\usepackage[figure,table]{totalcount}
+\usepackage{totcount}
+\usepackage{totpages}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[fleqn]{amsmath}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit, shapes.geometric, arrows.meta, calc, backgrounds}
+
+% БИБЛИОГРАФИЯ (Исправленная строка)
+\usepackage[backend=biber,style=gost-numeric,sorting=none]{biblatex}
+\addbibresource{mybibliography.bib}
+
+% НАСТРОЙКИ ПРЕПОДАВАТЕЛЯ
+\input{common.tex}
+\input{dop.tex}
+
+\KOMAoptions{fontsize=14, numbers=noendperiod, abstract=on, toc=chapterentrydotfill}
+\setkomafont{chapter}{\bfseries\rmfamily\normalsize}
+\setkomafont{section}{\bfseries\rmfamily}
+\setkomafont{subsection}{\bfseries\rmfamily}
+\RedeclareSectionCommand[beforeskip=0pt]{chapter}
+
+\usepackage[colorlinks]{hyperref} 
+\hypersetup{colorlinks, linkcolor=black, urlcolor=black, citecolor=black}
+
+\begin{document}
+% ... дальше как было

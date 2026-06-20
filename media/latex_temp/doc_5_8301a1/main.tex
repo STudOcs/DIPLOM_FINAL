@@ -1,0 +1,98 @@
+% Основной файл-сборщик ВКР
+\documentclass[paper=a4,
+			   fontsize=14pt,
+			   pagesize,
+			   DIV=calc,
+			   oneside]{scrreport}
+
+% --- ПРЕАМБУЛА (Настройки из исходника) ---
+\usepackage{metalogo}
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\defaultfontfeatures{Ligatures=TeX} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Courier New}
+
+\usepackage[figure,table]{totalcount}
+\usepackage{totcount}
+\usepackage{totpages}
+
+% Подключаем статику преподавателя (файлы должны лежать в той же папке при компиляции)
+\input{common.tex}
+
+% Настройки полей СТУ СФУ
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}
+\setlength{\topskip}{0pt}
+
+\usepackage{graphicx}
+\usepackage{indentfirst} 
+\usepackage[dvipsnames, table]{xcolor}
+\usepackage[colorlinks]{hyperref} 
+\hypersetup{colorlinks, linkcolor=black}
+
+\usepackage{caption}
+\captionsetup[figure]{labelsep=endash, position=below}
+\usepackage{hhline} 
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	font={normalsize},
+	position=top,
+	skip=6pt
+}
+
+\usepackage{longtable,ltcaption}
+\usepackage{multirow, multicol, makecell}
+\usepackage{array, tabu, tabularx, tabulary, booktabs}
+
+\KOMAoptions{fontsize=14, numbers=noendperiod, abstract=on, toc=chapterentrydotfill}
+
+\setkomafont{chapter}{\bfseries\rmfamily\normalsize}
+\setkomafont{section}{\bfseries\rmfamily}
+\setkomafont{subsection}{\bfseries\rmfamily}
+\setkomafont{disposition}{\rmfamily\normalsize}
+\setkomafont{pagenumber}{\normalfont\rmfamily}
+
+\RedeclareSectionCommand[beforeskip=0pt]{chapter}
+\setlength{\mathindent}{1.25cm}
+\usepackage[onehalfspacing]{setspace}
+\setlength{\parindent}{1.25cm}
+
+\input{dop.tex} % Дополнительные стили ( TikZ, листинги и т.д.)
+
+% --- НАЧАЛО ДОКУМЕНТА ---
+\begin{document}
+\pagestyle{empty} 
+
+% Вставляем части, которые мы отрендерим отдельно
+\input{title.tex}    % Титульный лист
+\input{task.tex}     % Задание
+\input{plan.tex}     % План-график
+\input{referate.tex}  % Реферат
+
+\newpage
+\tableofcontents
+\newpage
+
+\pagestyle{plain}
+\setcounter{page}{5} % Номер страницы после оглавления
+
+% --- ГЛАВНЫЙ КОНТЕНТ (Твои блоки из конструктора) ---
+% [BLOCK_START:block_1:TYPE:heading]
+\chapter{ Обзор технологий }
+
+% [BLOCK_END:block_1]
+% [BLOCK_START:block_2:TYPE:text]
+В данном разделе рассматривается использование Django и Docker для автоматизации верстки...
+% [BLOCK_END:block_2]
+
+% --- СПИСОК ЛИТЕРАТУРЫ ---
+\newpage
+\renewcaptionname{russian}{\bibname}{Список использованных источников}
+\printbibliography[heading=bibintoc]
+
+\end{document}

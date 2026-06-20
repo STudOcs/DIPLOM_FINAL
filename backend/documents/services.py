@@ -1,17 +1,15 @@
 import os
 import subprocess
 import uuid
+import shutil
 from jinja2 import Environment, FileSystemLoader
 from django.conf import settings
-from django.utils import timezone
 
 class LatexService:
     def __init__(self):
-        # Jinja2 для поиска шаблонов
-        template_path = os.path.join(settings.BASE_DIR, 'latex_core', 'templates')
+        self.template_base_path = os.path.join(settings.BASE_DIR, 'latex_core', 'templates')
         self.env = Environment(
-            loader=FileSystemLoader(template_path),
-            # Настройки Jinja2 с синтаксисом LaTeX
+            loader=FileSystemLoader(self.template_base_path),
             block_start_string='[#',
             block_end_string='#]',
             variable_start_string='[[',
@@ -20,7 +18,6 @@ class LatexService:
         self.env.filters['escape_latex'] = self.escape_latex
 
     def escape_latex(self, text):
-        """Экранирование спецсимволов LaTeX"""
         if not isinstance(text, str): return text
         conv = {
             '&': r'\&', '%': r'\%', '$': r'\$', '#': r'\#', '_': r'\_',
@@ -29,76 +26,90 @@ class LatexService:
         }
         return "".join(conv.get(c, c) for c in text)
 
-    def render_to_string(self, document):
-        """Собирает полный код документа из JSON-блоков"""
-        
-        # 1. Рендер титуль листа
-        title_template = self.env.get_template('title.tex')
-        title_page_content = title_template.render(doc=document, user=document.owner)
-
-        # 2. Рендер контент блоков
+    def render_blocks(self, document):
+        """Превращает JSON-блоки в одну строку LaTeX кода"""
         blocks_tex = []
         for index, block in enumerate(document.content_json):
             try:
-                block_template = self.env.get_template(f"blocks/{block['type']}.tex")
+                # Ищем шаблон в папке blocks/
+                template_name = f"blocks/{block['type']}.j2"
                 ctx = {
-                    'block_id': block.get('id', str(uuid.uuid4())[:8]),
+                    'block_id': block.get('id', index),
                     **block.get('content', {})
                 }
-                # Экранирование текста в текстовых блоках
+                # Экранируем текст для обычных блоков
                 if block['type'] == 'text' and 'text' in ctx:
                     ctx['text'] = self.escape_latex(ctx['text'])
                 
-                blocks_tex.append(block_template.render(**ctx))
+                blocks_tex.append(self.env.get_template(template_name).render(**ctx))
             except Exception as e:
-                blocks_tex.append(f"\n% Ошибка рендеринга блока {block['type']}: {str(e)}\n")
-
-        # 3. Собираем всё в основной каркас base.tex
-        base_template = self.env.get_template('base.tex')
-        full_latex = base_template.render(
-            title_page_content=title_page_content,
-            blocks_content="\n".join(blocks_tex),
-            doc=document
-        )
+                blocks_tex.append(f"\n% Ошибка блока {block['type']}: {str(e)}\n")
         
-        return full_latex
+        return "\n".join(blocks_tex)
 
     def compile_pdf(self, document):
-        """Процесс компиляции .tex -> .pdf"""
-        latex_code = self.render_to_string(document)
-        
-        # Генерируем уникальное имя файла
+        """Сборка многофайлового проекта ВКР"""
+        # 1. Подготовка путей
         file_id = f"doc_{document.id}_{uuid.uuid4().hex[:6]}"
-        temp_dir = os.path.join(settings.MEDIA_ROOT, 'latex_temp', file_id)
-        os.makedirs(temp_dir, exist_ok=True)
-        
-        tex_file_path = os.path.join(temp_dir, 'document.tex')
-        
-        # Сохраняем код в файл
-        with open(tex_file_path, 'w', encoding='utf-8') as f:
-            f.write(latex_code)
+        build_dir = os.path.join(settings.MEDIA_ROOT, 'latex_temp', file_id)
+        os.makedirs(build_dir, exist_ok=True)
 
-        # Запуск XeLaTeX (нужно 2 прогона для оглавления)
+        vkr_tpl_path = os.path.join(self.template_base_path, 'vkr_sfu')
+
+        # 2. Копируем статические файлы (.tex и .bib)
+        static_files = ['common.tex', 'dop.tex', 'mybibliography.bib']
+        for f_name in static_files:
+            src = os.path.join(vkr_tpl_path, f_name)
+            if os.path.exists(src):
+                shutil.copy(src, build_dir)
+
+        # 2. Список ДИНАМИЧНЫХ файлов (рендерим через Jinja)
+        # Мы убрали task, plan, referate из этого списка
+        dynamic_parts = ['title.j2', 'main.j2']
+        
+        context = {
+            'doc': document,
+            'user': document.owner,
+            'blocks_content': self.render_blocks(document)
+        }
+
+        for tpl_name in dynamic_parts:
+            content = self.env.get_template(f"vkr_sfu/{tpl_name}").render(**context)
+            target_name = tpl_name.replace('.j2', '.tex')
+            with open(os.path.join(build_dir, target_name), 'w', encoding='utf-8') as f:
+                f.write(content)
+
+        # 4. Процесс компиляции (XeLaTeX -> Biber -> XeLaTeX x2)
         try:
-            for _ in range(2):
-                result = subprocess.run(
-                    ['xelatex', '-interaction=nonstopmode', 'document.tex'],
-                    cwd=temp_dir,
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
+            run_cmd = {
+                'cwd': build_dir,
+                'capture_output': True,
+                'text': True,
+                'timeout': 60
+            }
+
+            # ПОСЛЕДОВАТЕЛЬНОСТЬ ДЛЯ ВКР СФУ:
+            # 1. XeLaTeX (создает список цитат для бибера)
+            subprocess.run(['xelatex', '-interaction=nonstopmode', 'main.tex'], **run_cmd)
             
-            pdf_path = os.path.join(temp_dir, 'document.pdf')
+            # 2. Biber (собирает список литературы)
+            subprocess.run(['biber', 'main'], **run_cmd)
+            
+            # 3. XeLaTeX (вставляет литературу)
+            subprocess.run(['xelatex', '-interaction=nonstopmode', 'main.tex'], **run_cmd)
+            
+            # 4. XeLaTeX (финализирует оглавление и номера страниц)
+            result = subprocess.run(['xelatex', '-interaction=nonstopmode', 'main.tex'], **run_cmd)
+
+            pdf_path = os.path.join(build_dir, 'main.pdf')
             
             if os.path.exists(pdf_path):
-                # Возвращаем путь относительно MEDIA_ROOT для сохранения в БД
-                relative_path = os.path.join('latex_temp', file_id, 'document.pdf')
+                relative_path = os.path.join('latex_temp', file_id, 'main.pdf')
                 return relative_path, None
             else:
-                return None, result.stdout # Возвращаем лог ошибки LaTeX
-                
+                return None, f"LaTeX Error:\n{result.stdout}"
+
         except subprocess.TimeoutExpired:
-            return None, "Превышено время ожидания компиляции (30 сек)."
+            return None, "Превышено время ожидания компиляции (60 сек)."
         except Exception as e:
             return None, str(e)

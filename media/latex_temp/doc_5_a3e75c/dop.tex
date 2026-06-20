@@ -1,0 +1,82 @@
+% 1. Настройки абзацного отступа
+\setlength{\parindent}{1.25cm}
+
+% 2. Глобальная настройка всех списков (enumitem)
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% 3. НАСТРОЙКА РАЗМЕРА И ШРИФТА ЗАГОЛОВКОВ (ФИКС ОГРОМНОГО ТЕКСТА)
+% Устанавливаем normalsize (14pt) для всех типов заголовков
+\setkomafont{disposition}{\rmfamily\bfseries\normalsize}
+\setkomafont{chapter}{\rmfamily\bfseries\normalsize}
+\setkomafont{section}{\rmfamily\bfseries\normalsize}
+\setkomafont{subsection}{\rmfamily\bfseries\normalsize}
+
+% Настройка оглавления (чтобы слово СОДЕРЖАНИЕ не было огромным)
+\setkomafont{chapterentry}{\rmfamily\normalsize}
+
+% 4. Настройка отступов и интервалов заголовков через KOMA-Script
+% indent=1.25cm вернет "красную строку" заголовкам
+\RedeclareSectionCommand[
+    beforeskip=12pt, 
+    afterskip=6pt, 
+    indent=1.25cm
+]{chapter}
+
+\RedeclareSectionCommand[
+    beforeskip=12pt, 
+    afterskip=6pt, 
+    indent=1.25cm
+]{section}
+
+\RedeclareSectionCommand[
+    beforeskip=12pt, 
+    afterskip=6pt, 
+    indent=1.25cm
+]{subsection}
+
+% 5. Команда против переносов
+\newcommand{\nohyphens}{\hyphenpenalty=10000\exhyphenpenalty=10000\sloppy}
+
+% 6. Настройка подписей (caption)
+\captionsetup{
+	justification=centering,
+	singlelinecheck=false
+}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+
+% 7. Настройка таблиц
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+% 8. Стили для листингов (JSON и TypeScript)
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    texcl=true % Важно для поддержки кириллицы в комментариях кода
+}
+
+\lstdefinelanguage{json}{
+	basicstyle=\ttfamily\footnotesize,
+	numbers=none,
+	stringstyle=\color{blue},
+}
+
+% Настройка библиографии под СФУ
+\DefineBibliographyStrings{russian}{
+	urlseen = {дата обращения:},
+}

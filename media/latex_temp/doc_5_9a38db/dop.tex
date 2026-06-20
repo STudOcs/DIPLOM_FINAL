@@ -1,0 +1,84 @@
+% --- 1. ОБЩИЕ НАСТРОЙКИ ТЕКСТА ---
+\onehalfspacing
+\setlength{\parindent}{1.25cm} 
+
+% Улучшенное выравнивание по ширине и переносы
+\sloppy 
+\hyphenpenalty=1000 
+\tolerance=2000
+
+% --- 2. ПРИНУДИТЕЛЬНОЕ "СОДЕРЖАНИЕ" (Название) ---
+\usepackage{etoolbox}
+\addto\captionsrussian{%
+  \renewcommand{\contentsname}{СОДЕРЖАНИЕ}%
+}
+
+% --- 3. ЦЕНТРИРОВАНИЕ ЗАГОЛОВКА СОДЕРЖАНИЯ (И только его!) ---
+% Мы переопределяем команду вывода заголовка списка (оглавления)
+\renewcommand*{\deftocheading}[2]{%
+  \begin{center}
+    \bfseries\normalsize #1
+  \end{center}
+  \vspace{1em}
+}
+
+% --- 4. ШРИФТЫ ЗАГОЛОВКОВ И СОДЕРЖАНИЯ (Везде 14pt) ---
+\setkomafont{disposition}{\rmfamily\bfseries\normalsize}
+\setkomafont{chapter}{\rmfamily\bfseries\normalsize}
+\setkomafont{section}{\rmfamily\bfseries\normalsize}
+\setkomafont{subsection}{\rmfamily\bfseries\normalsize}
+
+% Пункты в оглавлении — обычные, не жирные
+\setkomafont{chapterentry}{\normalfont\normalsize}
+\setkomafont{chapterentrypagenumber}{\normalfont\normalsize}
+\KOMAoptions{toc=chapterentrydotfill, numbers=noendperiod}
+
+% --- 5. МАГИЯ ОТСТУПОВ ЗАГОЛОВКОВ (1.25 см) ---
+\makeatletter
+% Для разделов (section, subsection)
+\renewcommand{\sectionlinesformat}[4]{%
+    \hspace{1.25cm}#3#4%
+}
+
+% Для глав (chapter)
+\renewcommand{\chapterlinesformat}[3]{%
+    \hspace{1.25cm}#2#3%
+}
+\makeatother
+
+% Интервалы
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{chapter}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{section}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{subsection}
+
+% --- 6. СПИСКИ (enumitem) ---
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% --- 7. ПОДПИСИ И ТАБЛИЦЫ ---
+\captionsetup{justification=centering, singlelinecheck=false}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+% --- 8. ЛИСТИНГИ ---
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    texcl=true,
+    frame=none
+}

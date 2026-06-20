@@ -1,0 +1,32 @@
+\documentclass[paper=a4, fontsize=14pt, pagesize, DIV=calc, oneside]{scrreport}
+
+% 1. ШРИФТЫ И ЯЗЫК
+\usepackage{metalogo}
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\defaultfontfeatures{Ligatures=TeX} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Courier New}
+
+% 2. ИНТЕРВАЛЫ И ГЕОМЕТРИЯ (ОБЯЗАТЕЛЬНО ТУТ)
+\usepackage{setspace} % Чтобы \setstretch работал и не печатался цифрами
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}]
+
+% 3. СЧЕТЧИКИ И ГРАФИКА
+\usepackage[figure,table]{totalcount}
+\usepackage{totcount}
+\usepackage{totpages}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[fleqn]{amsmath}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit, shapes.geometric, arrows.meta, calc, backgrounds}
+
+% 4. БИБЛИОГРАФИЯ
+\usepackage[backend=biber, style

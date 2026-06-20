@@ -1,0 +1,77 @@
+\documentclass[paper=a4, fontsize=14pt, pagesize, DIV=calc, oneside]{scrreport}
+
+% 1. ЯЗЫК И ШРИФТЫ
+\usepackage{metalogo}
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\defaultfontfeatures{Ligatures=TeX} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Courier New}
+
+% 2. ПАКЕТЫ ИНТЕРФЕЙСА И ГРАФИКИ
+\usepackage{setspace}
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}
+\usepackage[figure,table]{totalcount}
+\usepackage{totcount}
+\usepackage{totpages}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[fleqn]{amsmath}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit, shapes.geometric, arrows.meta, calc, backgrounds}
+
+% 3. БИБЛИОГРАФИЯ
+\usepackage[backend=biber, style=gost-numeric, sorting=none]{biblatex}
+\addbibresource{mybibliography.bib}
+
+% 4. ГИПЕРССЫЛКИ И ЗАКЛАДКИ
+\usepackage[colorlinks]{hyperref} 
+\hypersetup{colorlinks, linkcolor=black, urlcolor=black, citecolor=black}
+\usepackage{bookmark}
+
+% 5. ЗАГРУЗКА ДОПОЛНИТЕЛЬНЫХ ФАЙЛОВ
+\input{common.tex}
+\input{dop.tex}
+
+% 6. НАСТРОЙКИ KOMA-SCRIPT
+\KOMAoptions{fontsize=14, numbers=noendperiod, abstract=on, toc=chapterentrydotfill}
+\setkomafont{chapter}{\bfseries\rmfamily\normalsize}
+\setkomafont{section}{\bfseries\rmfamily}
+\setkomafont{subsection}{\bfseries\rmfamily}
+\RedeclareSectionCommand[beforeskip=0pt]{chapter}
+
+\begin{document}
+\pagestyle{empty} 
+
+\input{title.tex}
+\input{task.tex}
+\input{plan.tex}
+\input{referate.tex}
+
+\newpage
+\tableofcontents
+\newpage
+
+\pagestyle{plain}
+\setcounter{page}{5} 
+
+% [BLOCK_START:block_1:TYPE:heading]
+\chapter{ Обзор технологий }
+
+% [BLOCK_END:block_1]
+% [BLOCK_START:block_2:TYPE:text]
+В данном разделе рассматривается использование Django и Docker для автоматизации верстки...
+% [BLOCK_END:block_2]
+
+\newpage
+\printbibliography[heading=bibintoc, title={Список использованных источников}]
+
+\end{document}

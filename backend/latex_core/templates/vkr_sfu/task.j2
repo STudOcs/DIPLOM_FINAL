@@ -1,0 +1,41 @@
+\begin{center}
+	\begin{spacing}{0.5}
+		Министерство науки и высшего образования  РФ\\
+		{\small Федеральное государственное автономное}\\
+		{\small образовательное учреждение высшего образования}\\
+		\textbf{\small<<СИБИРСКИЙ ФЕДЕРАЛЬНЫЙ УНИВЕРСИТЕТ>>}\\[6mm]
+	\end{spacing}
+	\begin{spacing}{1.0}
+		[[ doc.institute_name ]]\\
+		Кафедра [[ doc.chair_name ]]\\
+	\end{spacing}
+\end{center}		
+
+\begin{center}
+	\textbf{ЗАДАНИЕ \\ НА ВЫПУСКНУЮ КВАЛИФИКАЦИОННУЮ РАБОТУ}\\
+	\textbf{в форме бакалаврской работы}
+\end{center}
+
+\vspace{1cm}
+
+Студенту: [[ user.last_name ]] [[ user.first_name ]] [[ user.middle_name ]].
+
+Группа: [[ user.student_group ]], направление [[ doc.direction_code ]] <<[[ doc.direction_name ]]>>.
+
+Тема ВКР: <<[[ doc.title ]]>>.
+
+Руководитель ВКР: [[ doc.supervisor_initials ]] [[ doc.supervisor_surname ]], [[ doc.supervisor_degree ]].
+
+\vfill
+
+\begin{tabular}{m{.40\textwidth}m{.20\textwidth}m{.30\textwidth}}
+	Руководитель ВКР& \rule{3cm}{.1pt} & [[ doc.supervisor_initials ]] [[ doc.supervisor_surname ]]\\
+	Задание принято к исполнению& \rule{3cm}{.1pt} & [[ user.last_name ]] [[ user.first_name[0] ]].[[ user.middle_name[0] ]].\\
+\end{tabular}
+
+\begin{tikzpicture}[remember picture,overlay]
+	\node[anchor=south, yshift=1.5cm, xshift=1cm] at (current page.south) {
+		\begin{tabular}{c} Красноярск [[ doc.year ]] \end{tabular}
+	};
+\end{tikzpicture}
+\newpage

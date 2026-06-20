@@ -1,0 +1,65 @@
+% --- ОБЩИЕ НАСТРОЙКИ ТЕКСТА ---
+\onehalfspacing
+\setlength{\parindent}{1.25cm} % Абзацный отступ
+
+% Улучшенное выравнивание по ширине (меньше дырок и адекватные переносы)
+\sloppy 
+\hyphenpenalty=1000 
+\tolerance=2000
+
+% --- НАСТРОЙКА ОГЛАВЛЕНИЯ (СОДЕРЖАНИЕ) ---
+\renewcaptionname{russian}{\contentsname}{\bfseries СОДЕРЖАНИЕ} % Жирный заголовок
+\BeforeTOCHead[toc]{\renewcommand*{\raggedsection}{\centering}} % Центрирование заголовка
+
+% Делаем пункты оглавления обычным шрифтом (не жирным)
+\setkomafont{chapterentry}{\normalfont}
+\setkomafont{chapterentrypagenumber}{\normalfont}
+\KOMAoptions{toc=chapterentrydotfill} % Точки для глав
+
+% --- НАСТРОЙКА ЗАГОЛОВКОВ (ОТСТУП 1.25 СМ) ---
+\KOMAoptions{numbers=noendperiod} % Убирает точку в конце номера (1.1 вместо 1.1.)
+
+% Устанавливаем шрифт 14pt жирный для всех заголовков
+\setkomafont{disposition}{\rmfamily\bfseries\normalsize}
+
+% Настройка отступов и интервалов (размеры beforeskip можно уменьшить, если заголовки кажутся слишком далеко)
+\RedeclareSectionCommand[indent=1.25cm, beforeskip=12pt, afterskip=6pt]{chapter}
+\RedeclareSectionCommand[indent=1.25cm, beforeskip=12pt, afterskip=6pt]{section}
+\RedeclareSectionCommand[indent=1.25cm, beforeskip=12pt, afterskip=6pt]{subsection}
+
+% --- СПИСКИ (enumitem) ---
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% --- ПОДПИСИ И ТАБЛИЦЫ ---
+\captionsetup{justification=centering, singlelinecheck=false}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+% --- ЛИСТИНГИ КОДА ---
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    texcl=true,
+    frame=single
+}
+
+\DefineBibliographyStrings{russian}{
+	urlseen = {дата обращения:},
+}

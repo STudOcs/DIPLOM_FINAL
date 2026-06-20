@@ -1,0 +1,86 @@
+\documentclass[paper=a4, fontsize=14pt, pagesize, DIV=calc, oneside]{scrreport}
+
+% 1. ШРИФТЫ И ЯЗЫК
+\usepackage{metalogo}
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\defaultfontfeatures{Ligatures=TeX} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Courier New}
+
+% 2. ИНТЕРВАЛЫ И ГЕОМЕТРИЯ
+\usepackage{setspace}
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}
+\setlength{\topskip}{0pt}
+\usepackage[onehalfspacing]{setspace}
+\setlength{\parindent}{1.25cm}
+
+% 3. ПАКЕТЫ ИЗ ОРИГИНАЛА
+\usepackage[figure,table]{totalcount}
+\usepackage{totcount}
+\usepackage{totpages}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[fleqn]{amsmath}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit, shapes.geometric, arrows.meta, calc, backgrounds}
+
+% 4. БИБЛИОГРАФИЯ
+\usepackage[backend=biber, style=gost-numeric, sorting=none]{biblatex}
+\addbibresource{mybibliography.bib}
+
+% 5. ПЕРЕИМЕНОВАНИЕ И ЦЕНТРИРОВАНИЕ СОДЕРЖАНИЯ (Как в оригинале)
+\renewcaptionname{russian}{\contentsname}{\normalsize\bfseries СОДЕРЖАНИЕ}
+\BeforeTOCHead[toc]{\renewcommand*{\raggedsection}{\centering}}
+
+% 6. ПОДКЛЮЧАЕМ СТИЛИ (Тут живут отступы разделов)
+\input{common.tex}
+\input{dop.tex}
+
+% Настройки KOMA-Script для заголовков
+\KOMAoptions{fontsize=14, numbers=noendperiod, toc=chapterentrydotfill}
+\setkomafont{chapter}{\bfseries\rmfamily\normalsize}
+\setkomafont{section}{\bfseries\rmfamily}
+\setkomafont{subsection}{\bfseries\rmfamily}
+
+% Убираем точку после номера и настраиваем отступы
+\RedeclareSectionCommand[beforeskip=0pt, indent=0pt]{chapter} 
+\RedeclareSectionCommand[indent=1.25cm, beforeskip=12pt, afterskip=6pt]{section}
+\RedeclareSectionCommand[indent=1.25cm, beforeskip=12pt, afterskip=6pt]{subsection}
+
+\usepackage[colorlinks]{hyperref} 
+\hypersetup{colorlinks, linkcolor=black, urlcolor=black, citecolor=black}
+
+\begin{document}
+\pagestyle{empty} 
+
+% Титульный лист
+\input{title.tex}
+
+\newpage
+\tableofcontents
+\newpage
+
+\pagestyle{plain}
+\setcounter{page}{2} 
+
+% ОСНОВНОЙ КОНТЕНТ
+% [BLOCK_START:block_1:TYPE:heading]
+\chapter{ Обзор технологий }
+
+% [BLOCK_END:block_1]
+% [BLOCK_START:block_2:TYPE:text]
+В данном разделе рассматривается использование Django и Docker для автоматизации верстки...
+% [BLOCK_END:block_2]
+
+\newpage
+\printbibliography[heading=bibintoc, title={Список использованных источников}]
+
+\end{document}

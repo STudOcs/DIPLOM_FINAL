@@ -1,0 +1,80 @@
+% --- ОБЩИЕ НАСТРОЙКИ ТЕКСТА ---
+\onehalfspacing
+\setlength{\parindent}{1.25cm} 
+
+% Борьба с дырками в строках и переносами
+\sloppy 
+\hyphenpenalty=1000 
+\tolerance=2000
+
+% --- ПРИНУДИТЕЛЬНОЕ СОДЕРЖАНИЕ (ФИКС "ОГЛАВЛЕНИЯ") ---
+\usepackage{etoolbox}
+\addto\captionsrussian{%
+  \renewcommand{\contentsname}{СОДЕРЖАНИЕ}%
+}
+
+% Центрирование и шрифт заголовка Содержания
+\BeforeTOCHead[toc]{%
+  \let\raggedsection\centering% Принудительно по центру
+  \setkomafont{chapter}{\rmfamily\bfseries\normalsize}% Жирный и 14pt
+}
+
+% После оглавления возвращаем заголовки глав влево (но с твоим отступом)
+\AfterTOCHead[toc]{%
+  \let\raggedsection\relax%
+}
+
+% --- ШРИФТЫ ПУНКТОВ (Обычный, не жирный) ---
+\setkomafont{chapterentry}{\normalfont\normalsize}
+\setkomafont{chapterentrypagenumber}{\normalfont\normalsize}
+\KOMAoptions{toc=chapterentrydotfill}
+
+% --- НАСТРОЙКА ЗАГОЛОВКОВ (14pt жирный + отступ 1.25) ---
+\KOMAoptions{numbers=noendperiod}
+\setkomafont{disposition}{\rmfamily\bfseries\normalsize}
+
+% Тот самый рабочий сдвиг заголовков
+\makeatletter
+\renewcommand{\sectionlinesformat}[4]{%
+    \hspace{1.25cm}#3#4%
+}
+\renewcommand{\chapterlinesformat}[3]{%
+    \hspace{1.25cm}#2#3%
+}
+\makeatother
+
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{chapter}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{section}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{subsection}
+
+% --- СПИСКИ ---
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% --- ПОДПИСИ И ТАБЛИЦЫ ---
+\captionsetup{justification=centering, singlelinecheck=false}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+% --- ЛИСТИНГИ ---
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    texcl=true,
+    frame=none
+}

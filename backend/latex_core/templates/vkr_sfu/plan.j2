@@ -1,0 +1,27 @@
+\newpage
+\begin{center}
+	\textbf{ПЛАН-ГРАФИК подготовки ВКР}\\[5mm]
+\end{center}
+
+Индивидуальная тема: <<[[ doc.title ]]>>\\
+Обучающийся: [[ user.last_name ]] [[ user.first_name ]] [[ user.middle_name ]]\\
+Руководитель: [[ doc.supervisor_surname ]] [[ doc.supervisor_initials ]]
+
+\vspace{5mm}
+
+{
+	\noindent
+	\fontsize{12pt}{14pt}\selectfont 
+	\begin{longtable}[l]{| >{\centering\arraybackslash}p{1cm} | >{\arraybackslash}p{8cm} | >{\centering\arraybackslash}p{4cm} |}
+		\caption{График выполнения этапов ВКР}\label{tab:schedule} \\
+		\hline
+		№ & Этап выполнения & Срок \\ \hline
+		[# for step in doc.plan_steps #]
+		[[ loop.index ]] & [[ step.work ]] & [[ step.deadline ]] \\ \hline
+		[# else #]
+		1 & Сбор материалов и анализ предметной области & [[ doc.year ]]-02-01 \\ \hline
+		2 & Проектирование и разработка системы & [[ doc.year ]]-04-15 \\ \hline
+		3 & Подготовка пояснительной записки & [[ doc.year ]]-05-20 \\ \hline
+		[# endfor #]
+	\end{longtable}
+}

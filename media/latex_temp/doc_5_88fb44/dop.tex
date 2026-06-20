@@ -1,0 +1,65 @@
+% Настройки абзацного отступа и списков
+\setlength{\parindent}{1.25cm}
+
+% Глобальная настройка всех списков (enumitem)
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% Настройка заголовков через KOMA-Script (вместо titlesec)
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt, indent=1.25cm]{section}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt, indent=1.25cm]{subsection}
+
+% Команда против переносов
+\newcommand{\nohyphens}{\hyphenpenalty=10000\exhyphenpenalty=10000\sloppy}
+
+% Настройка подписей (caption)
+\captionsetup{
+	justification=centering,
+	singlelinecheck=false
+}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+
+% Настройка ссылок
+\urlstyle{same}
+
+% Настройка таблиц
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+% Стили для листингов (JSON и TypeScript)
+\lstdefinelanguage{json}{
+	basicstyle=\ttfamily\footnotesize,
+	numbers=none,
+	breaklines=true,
+	stringstyle=\color{blue},
+}
+
+\lstdefinelanguage{TypeScript}{
+	keywords={export, async, function, return, await, string, const, let},
+	keywordstyle=\color{blue}\bfseries,
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	stringstyle=\color{red},
+	morestring=[b]',
+	morestring=[b]",
+	morestring=[b]{`}
+}
+
+% Настройка библиографии под СФУ
+\DefineBibliographyStrings{russian}{
+	urlseen = {дата обращения:},
+}

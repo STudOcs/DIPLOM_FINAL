@@ -1,0 +1,196 @@
+\usepackage{indentfirst}
+\setlength{\parindent}{1.25cm} % Стандартный абзацный отступ
+
+\usepackage{enumitem}
+
+% Глобальная настройка всех списков
+\setlist{
+	leftmargin=0pt,      % Текст второй строки пойдет от самого края (0см)
+	nosep,               % Убираем вертикальные отступы (требование СФУ)
+	wide=\parindent,     % Первая строка (с номером) начинается с 1.25см
+	labelsep=0.5em,      % Расстояние от номера до текста
+	listparindent=\parindent % Отступ для новых абзацев внутри одного пункта
+}
+
+% Настройка для маркированного списка (тире по СТУ СФУ)
+\setlist[itemize,1]{label=--} 
+
+% Настройка для нумерованного списка (цифра с точкой)
+\setlist[enumerate,1]{label=\arabic*.}
+
+
+\usepackage{titlesec}
+\usepackage{indentfirst}
+
+% Команда против переносов
+\newcommand{\nohyphens}{\hyphenpenalty=10000\exhyphenpenalty=10000\sloppy}
+
+% Стиль для всех уровней
+\titleformat{\chapter}[hang]{\nohyphens\bfseries}{\thechapter}{1em}{}
+\titleformat{\section}{\nohyphens\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\nohyphens\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\nohyphens\bfseries}{\thesubsubsection}{1em}{}
+
+% Отступы для всех уровней (с абзацным отступом \parindent)
+\titlespacing*{\chapter}{\parindent}{0pt}{1em}
+\titlespacing*{\section}{\parindent}{1em}{1em}
+\titlespacing*{\subsection}{\parindent}{1em}{1em}
+\titlespacing*{\subsubsection}{\parindent}{1em}{1em}
+
+% Если нужна точка после номера (1.1. Заголовок)
+\usepackage{secdot}
+\sectiondot{chapter}
+\sectiondot{section}
+\sectiondot{subsection}
+\sectiondot{subsubsection}
+
+% Настройка для ОБЫЧНЫХ (пронумерованных) глав (как вы просили раньше: слева с отступом)
+\titleformat{\chapter}[hang]
+{\nohyphens\bfseries}
+{\thechapter}
+{1em}
+{}
+\titlespacing*{\chapter}{\parindent}{0pt}{1em}
+
+% Настройка для \addchap и \chapter* (Введение, Заключение и т.д.)
+% Делаем по центру, заглавными буквами и без абзацного отступа
+\titleformat{name=\chapter,numberless}[block]
+{\nohyphens\bfseries\filcenter} % Жирный, без переносов, по центру
+{}                            % Номера нет
+{0pt}                         % Расстояние от номера (0)
+{\MakeUppercase}              % ПРЕВРАЩАЕТ ТЕКСТ В ЗАГЛАВНЫЕ
+
+% Отступы для \addchap: {слева}{сверху}{снизу}
+\titlespacing*{name=\chapter,numberless}{0pt}{0pt}{1em}
+
+\usepackage{float}
+
+\usepackage{caption}
+
+% Применяем настройки для всех подписей
+\captionsetup{
+	justification=centering, % Центрирует подпись (по стандарту СФУ)
+	singlelinecheck=false  % Позволяет центрировать даже длинные подписи в несколько строк
+}
+
+% Если точка все равно остается, принудительно убираем её из формата номера:
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,          % цвет внутренних ссылок
+	citecolor=black,          % цвет ссылок на литературу
+	filecolor=black,          % цвет ссылок на файлы
+	urlcolor=black,           % цвет гиперссылок (URL)
+}
+
+\urlstyle{same}
+
+\usepackage{array}
+
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+\captionsetup[table]{skip=1pt}
+
+\LTchunksize=100
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Определяем цвета для JSON
+\definecolor{json_key}{RGB}{0,0,255}       % Синий для ключей
+\definecolor{json_string}{RGB}{163,21,21} % Красный для значений
+\definecolor{json_background}{RGB}{250,250,250} % Почти белый фон
+
+\lstdefinelanguage{json}{
+	basicstyle=\ttfamily\footnotesize, % Уменьшенный шрифт (footnotesize)
+	numbers=none,
+	stepnumber=1,
+	numbersep=8pt,
+	showstringspaces=false,
+	breaklines=true,
+	backgroundcolor=\color{json_background},
+	xleftmargin=2.5cm,      % Отступ слева (отодвигаем от края)
+	xrightmargin=2cm,       % Отступ справа
+	frame=none,             % Без рамки (по СТУ СФУ)
+	stringstyle=\color{json_string},
+	literate=
+	*{0}{{{\color{json_key}0}}}{1}
+	{1}{{{\color{json_key}1}}}{1}
+	{2}{{{\color{json_key}2}}}{1}
+	{3}{{{\color{json_key}3}}}{1}
+	{4}{{{\color{json_key}4}}}{1}
+	{5}{{{\color{json_key}5}}}{1}
+	{6}{{{\color{json_key}6}}}{1}
+	{7}{{{\color{json_key}7}}}{1}
+	{8}{{{\color{json_key}8}}}{1}
+	{9}{{{\color{json_key}9}}}{1}
+	{:}{{{\color{black}{:}}}}{1}
+	{,}{{{\color{black}{,}}}}{1}
+	{\{}{{{\color{black}{\{}}}}{1}
+	{\}}{{{\color{black}{\}}}}}{1}
+	{[}{{{\color{black}{[}}}}{1}
+	{]}{{{\color{black}{]}}}}{1},
+	morestring=[b]",
+	morestring=[d]'
+}
+
+% Цвета для подсветки
+\definecolor{code_keyword}{RGB}{0,0,255}    % Синий для ключевых слов
+\definecolor{code_string}{RGB}{163,21,21}   % Красный для строк
+\definecolor{code_comment}{RGB}{0,128,0}    % Зеленый для комментариев
+\definecolor{code_type}{RGB}{38,127,153}    % Бирюзовый для типов
+
+\lstdefinelanguage{TypeScript}{
+	keywords={export, async, function, return, method, body, await, string, const, let},
+	keywordstyle=\color{code_keyword}\bfseries,
+	ndkeywords={DocumentPayload, string},
+	ndkeywordstyle=\color{code_type}\bfseries,
+	identifierstyle=\color{black},
+	sensitive=false,
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	commentstyle=\color{code_comment}\ttfamily,
+	stringstyle=\color{code_string}\ttfamily,
+	morestring=[b]',
+	morestring=[b]",
+	morestring=[b]{`} % Исправлено: теперь обратные кавычки (backticks) работают корректно
+}
+
+\usetikzlibrary{positioning, fit, shapes.geometric, arrows.meta, calc, backgrounds}
+
+\setlength{\bibhang}{0pt}
+
+% 1. Обнуляем стандартный висячий отступ biblatex
+\setlength{\bibhang}{0pt}
+
+% 2. Переопределяем окружение библиографии под требования СФУ (как wide list)
+\defbibenvironment{bibliography}
+{\list
+	{\printtext[labelnumberwidth]{%
+			\printfield{labelprefix}%
+			\printfield{labelnumber}}
+	}
+	{
+		\setlength{\leftmargin}{0pt}    % Вторая строка и далее — от левого края (0см)
+		\setlength{\itemindent}{1.75cm} % Первый символ (номер) — отступ 1.25см
+		\setlength{\labelsep}{0.5em}    % Расстояние от номера до текста
+		\setlength{\labelwidth}{0pt}
+		\setlength{\itemsep}{\bibitemsep}
+		\setlength{\parsep}{\bibparsep}
+	}
+}
+{\endlist}
+{\item}
+
+\DefineBibliographyStrings{russian}{
+	urlseen = {дата обращения:},
+}

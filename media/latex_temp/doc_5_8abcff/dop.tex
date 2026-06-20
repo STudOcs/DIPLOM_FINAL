@@ -1,0 +1,76 @@
+% --- ОБЩИЕ НАСТРОЙКИ ТЕКСТА ---
+\onehalfspacing
+\setlength{\parindent}{1.25cm} 
+
+% Настройки шрифтов заголовков (все 14pt, жирные)
+\setkomafont{disposition}{\rmfamily\bfseries\normalsize}
+\setkomafont{chapter}{\rmfamily\bfseries\normalsize}
+\setkomafont{section}{\rmfamily\bfseries\normalsize}
+\setkomafont{subsection}{\rmfamily\bfseries\normalsize}
+
+% Настройка оглавления
+\setkomafont{chapterentry}{\normalfont\normalsize}
+\setkomafont{chapterentrypagenumber}{\normalfont\normalsize}
+\KOMAoptions{toc=chapterentrydotfill, numbers=noendperiod}
+
+% --- МАГИЯ ОТСТУПОВ ЗАГОЛОВКОВ (Принудительный сдвиг) ---
+% 1. Убираем автоматические выравнивания, которые могут мешать
+\renewcommand*{\raggedsection}{} 
+
+% 2. Переопределяем формат печати строк для ВСЕХ разделов (section, subsection и т.д.)
+\makeatletter
+\renewcommand{\sectionlinesformat}[4]{%
+    \hspace{1.25cm}#3#4% Вставляем 1.25см перед номером (#3) и текстом (#4)
+}
+
+% 3. Переопределяем формат специально для ГЛАВ (chapter)
+\renewcommand{\chapterlinesformat}[3]{%
+    \hspace{1.25cm}#2#3% Вставляем 1.25см перед номером (#2) и текстом (#3)
+}
+\makeatother
+
+% Настройка интервалов (отступы до и после заголовка)
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{chapter}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{section}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{subsection}
+
+% --- ТИПОГРАФИКА (Борьба с дырками и переносами) ---
+\sloppy 
+\hyphenpenalty=1000 
+\tolerance=2000
+
+% --- СПИСКИ ---
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% --- ПОДПИСИ ---
+\captionsetup{justification=centering, singlelinecheck=false}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+% --- ЛИСТИНГИ ---
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    texcl=true,
+    frame=none
+}
+
+\DefineBibliographyStrings{russian}{
+	urlseen = {дата обращения:},
+}

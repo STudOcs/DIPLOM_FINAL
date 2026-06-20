@@ -1,0 +1,64 @@
+% --- ОБЩИЕ НАСТРОЙКИ ТЕКСТА ---
+\onehalfspacing
+\setlength{\parindent}{1.25cm} 
+
+\sloppy 
+\hyphenpenalty=1000 
+\tolerance=2000
+
+% --- ФИКС РАЗМЕРОВ ЗАГОЛОВКОВ (14pt везде) ---
+\setkomafont{disposition}{\rmfamily\bfseries\normalsize}
+\setkomafont{chapter}{\rmfamily\bfseries\normalsize}
+\setkomafont{section}{\rmfamily\bfseries\normalsize}
+\setkomafont{subsection}{\rmfamily\bfseries\normalsize}
+
+% Настройка оглавления (текст обычный, заголовок жирный)
+\setkomafont{chapterentry}{\normalfont\normalsize}
+\setkomafont{chapterentrypagenumber}{\normalfont\normalsize}
+\KOMAoptions{toc=chapterentrydotfill}
+
+% --- НАСТРОЙКА ОГЛАВЛЕНИЯ (СОДЕРЖАНИЕ) ---
+\renewcaptionname{russian}{\contentsname}{\bfseries СОДЕРЖАНИЕ}
+\BeforeTOCHead[toc]{\renewcommand*{\raggedsection}{\centering}}
+
+% --- МАГИЯ ОТСТУПОВ ЗАГОЛОВКОВ (1.25 см) ---
+% Эта команда перехватывает отрисовку заголовка и вставляет отступ
+\makeatletter
+\renewcommand{\sectionlinesformat}[4]{%
+  \ifstr{#1}{chapter}{%
+    % Для глав (если они не центрированы)
+    \hspace{1.25cm}#3#4%
+  }{%
+    % Для разделов и подразделов
+    \hspace{1.25cm}#3#4%
+  }%
+}
+\makeatother
+
+% Убираем точку после номера (1.1 вместо 1.1.)
+\KOMAoptions{numbers=noendperiod}
+
+% Базовые интервалы для заголовков
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{chapter}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{section}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{subsection}
+
+% --- СПИСКИ (enumitem) ---
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% --- ПОДПИСИ И ТАБЛИЦЫ ---
+\captionsetup{justification=centering, singlelinecheck=false}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justificat
