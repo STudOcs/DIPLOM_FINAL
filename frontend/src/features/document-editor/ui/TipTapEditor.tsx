@@ -478,9 +478,33 @@ export const TipTapEditor = ({
         },
       }),
       Underline,
-      Image.configure({
-        allowBase64: true,
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+
+            mediaId: {
+              default: null,
+              parseHTML: element => element.getAttribute('data-media-id'),
+              renderHTML: attributes => {
+                if (!attributes.mediaId) return {};
+                return { 'data-media-id': attributes.mediaId };
+              },
+            },
+
+            storagePath: {
+              default: null,
+              parseHTML: element => element.getAttribute('data-storage-path'),
+              renderHTML: attributes => {
+                if (!attributes.storagePath) return {};
+                return { 'data-storage-path': attributes.storagePath };
+              },
+            },
+          };
+        },
+      }).configure({
         inline: false,
+        allowBase64: false,
       }),
       Table.configure({
         resizable: true,
@@ -512,6 +536,7 @@ export const TipTapEditor = ({
 
       renumberNumberedHeadings(editor);
       renumberTableTitles(editor);
+      renumberFigureTitles(editor);
       normalizeLists(editor);
       updateTableOfContents(editor);
 
@@ -649,6 +674,72 @@ export const TipTapEditor = ({
       45,
       Math.min(MIN_TABLE_COLUMN_WIDTH, Math.floor(tableWidth / columnCount) - 4),
     );
+  };
+
+  const renumberFigureTitles = (editor: Editor) => {
+    const updates: { from: number; to: number; text: string }[] = [];
+
+    let commonFigureNumber = 1;
+    let currentAppendixLetter: string | null = null;
+    const appendixFigureCounters: Record<string, number> = {};
+
+    editor.state.doc.descendants((node, pos) => {
+      if (
+        node.type.name === 'heading' &&
+        node.attrs.headingKind === 'structural'
+      ) {
+        const appendixMatch = node.textContent
+          .trim()
+          .toUpperCase()
+          .match(/^ПРИЛОЖЕНИЕ\s+([А-ЯA-Z])$/u);
+
+        currentAppendixLetter = appendixMatch ? appendixMatch[1] : null;
+        return;
+      }
+
+      if (node.type.name !== 'paragraph') return;
+
+      const isFigureTitle =
+        node.attrs.class === 'figure-title' ||
+        /^Рисунок\s+/u.test(node.textContent.trim());
+
+      if (!isFigureTitle) return;
+
+      const rawTitle = node.textContent
+        .replace(/^Рисунок\s+[А-ЯA-Z]\.\d+\s*[—–-]\s*/u, '')
+        .replace(/^Рисунок\s+\d+\s*[—–-]\s*/u, '')
+        .trim();
+
+      let expected: string;
+
+      if (currentAppendixLetter) {
+        appendixFigureCounters[currentAppendixLetter] =
+          (appendixFigureCounters[currentAppendixLetter] || 0) + 1;
+
+        expected = `Рисунок ${currentAppendixLetter}.${appendixFigureCounters[currentAppendixLetter]} – ${rawTitle || 'Название рисунка'}`;
+      } else {
+        expected = `Рисунок ${commonFigureNumber} – ${rawTitle || 'Название рисунка'}`;
+        commonFigureNumber += 1;
+      }
+
+      if (node.textContent !== expected) {
+        updates.push({
+          from: pos + 1,
+          to: pos + node.nodeSize - 1,
+          text: expected,
+        });
+      }
+    });
+
+    if (!updates.length) return;
+
+    let tr = editor.state.tr;
+
+    updates.reverse().forEach(update => {
+      tr = tr.insertText(update.text, update.from, update.to);
+    });
+
+    editor.view.dispatch(tr);
   };
 
   useEffect(() => {

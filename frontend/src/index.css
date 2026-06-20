@@ -1004,3 +1004,33 @@ html, body, #root {
   overflow: hidden;
   white-space: nowrap;
 }
+
+.ProseMirror.sfu-document-content img {
+  display: block;
+  max-width: 100%;
+  margin: 0 auto 2pt auto !important;
+}
+
+.ProseMirror.sfu-document-content p.figure-title {
+  text-align: center !important;
+  text-indent: 0 !important;
+
+  margin-top: 0 !important;
+  margin-bottom: 6pt !important;
+
+  padding: 0 !important;
+
+  font-size: 14pt !important;
+  line-height: 1.5 !important;
+}
+
+.ProseMirror img + p:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ProseMirror p:empty {
+  margin: 0 !important;
+  min-height: 0 !important;
+}
