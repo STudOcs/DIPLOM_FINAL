@@ -8,7 +8,6 @@ from .services import LatexService
 from django.core.files.storage import default_storage
 from .tasks import compile_pdf_task
 
-
 class TemplateViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Эндпоинт для получения списка доступных шаблонов (только чтение)
@@ -76,7 +75,15 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         pdf_url = None
         if document.pdf_file:
-            pdf_url = default_storage.url(document.pdf_file)
+            pdf_url = None
+            if document.pdf_file:
+                pdf_url = default_storage.url(document.pdf_file)
+
+                internal = getattr(settings, "AWS_S3_ENDPOINT_URL", "")
+                public = getattr(settings, "AWS_S3_PUBLIC_ENDPOINT_URL", internal)
+
+                if internal and public and pdf_url.startswith(internal):
+                    pdf_url = pdf_url.replace(internal, public, 1)
 
         return Response(
             {

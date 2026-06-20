@@ -1,0 +1,79 @@
+% --- 1. ОБЩИЕ НАСТРОЙКИ ТЕКСТА ---
+\onehalfspacing
+\setlength{\parindent}{1.25cm} 
+
+% Борьба с дырками в строках и переносами
+\sloppy 
+\hyphenpenalty=1000 
+\tolerance=2000
+
+% --- 2. ПРИНУДИТЕЛЬНОЕ "СОДЕРЖАНИЕ" (Название) ---
+\usepackage{etoolbox}
+\addto\captionsrussian{%
+  \renewcommand{\contentsname}{СОДЕРЖАНИЕ}%
+}
+
+% --- 3. ШРИФТЫ ЗАГОЛОВКОВ (Везде 14pt жирный) ---
+\setkomafont{disposition}{\rmfamily\bfseries\normalsize}
+\setkomafont{chapter}{\rmfamily\bfseries\normalsize}
+\setkomafont{section}{\rmfamily\bfseries\normalsize}
+\setkomafont{subsection}{\rmfamily\bfseries\normalsize}
+
+% Пункты в оглавлении — обычные (НЕ жирные)
+\setkomafont{chapterentry}{\normalfont\normalsize}
+\setkomafont{chapterentrypagenumber}{\normalfont\normalsize}
+\KOMAoptions{toc=chapterentrydotfill, numbers=noendperiod}
+
+% --- 4. УМНАЯ ЛОГИКА ВЫРАВНИВАНИЯ (Центр для Содержания, Отступ для остального) ---
+\makeatletter
+% Логика для ГЛАВ (chapter)
+\renewcommand{\chapterlinesformat}[3]{%
+  \ifstr{#2}{}{% ЕСЛИ НЕТ НОМЕРА (как в Содержании, Введении, Литературе)
+    \begin{center}#3\end{center}% ЦЕНТРИРУЕМ
+  }{% ЕСЛИ ЕСТЬ НОМЕР (как 1. Обзор технологий)
+    \hspace{1.25cm}#2#3% ДЕЛАЕМ ОТСТУП 1.25см
+  }%
+}
+
+% Логика для РАЗДЕЛОВ (section, subsection)
+\renewcommand{\sectionlinesformat}[4]{%
+    \hspace{1.25cm}#3#4% Всегда отступ 1.25см
+}
+\makeatother
+
+% Интервалы между заголовками и текстом
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{chapter}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{section}
+\RedeclareSectionCommand[beforeskip=12pt, afterskip=6pt]{subsection}
+
+% --- 5. СПИСКИ (enumitem) ---
+\setlist{
+	leftmargin=0pt,
+	nosep,
+	wide=\parindent,
+	labelsep=0.5em,
+	listparindent=\parindent
+}
+\setlist[itemize,1]{label=--} 
+\setlist[enumerate,1]{label=\arabic*.}
+
+% --- 6. ПОДПИСИ И ТАБЛИЦЫ ---
+\captionsetup{justification=centering, singlelinecheck=false}
+\DeclareCaptionLabelFormat{simple}{#1~#2}
+\captionsetup{labelformat=simple}
+\DeclareCaptionLabelSeparator{emdash}{ --- }
+\captionsetup[table]{
+	labelsep=emdash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt
+}
+
+% --- 7. ЛИСТИНГИ ---
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    texcl=true,
+    frame=none
+}

@@ -16,6 +16,8 @@ import {
   Image as ImageIcon,
   Table as TableIcon,
   Type,
+  Loader2, 
+  FileText,
 } from 'lucide-react';
 
 import { EditorToolbar } from './EditorToolbar';
@@ -25,6 +27,9 @@ interface TipTapEditorProps {
   onChange: (html: string) => void;
   onEditorInit: (editor: Editor) => void;
   pdfUrl?: string | null;
+  isCompiling?: boolean;
+  compilationStatus?: string;
+  compilationLog?: string;
 }
 
 type OutlineItem = {
@@ -39,6 +44,9 @@ export const TipTapEditor = ({
   onChange,
   onEditorInit,
   pdfUrl,
+  isCompiling = false,
+  compilationStatus,
+  compilationLog,
 }: TipTapEditorProps) => {
   const [outline, setOutline] = useState<OutlineItem[]>([]);
   const editorWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -1129,26 +1137,35 @@ export const TipTapEditor = ({
         </div>
       </main>
 
-      <aside className="border-l bg-white overflow-hidden flex flex-col">
-        <div className="h-12 px-4 border-b flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-700">
-            PDF предпросмотр
-          </h3>
-        </div>
+      <aside className="w-[450px] border-l bg-white hidden 2xl:flex flex-col relative shrink-0">
+        {isCompiling ? (
+          <div className="flex-1 flex flex-col items-center justify-center bg-gray-50/50">
+            <Loader2 size={48} className="text-orange-600 animate-spin mb-4" />
+            <p className="text-gray-600 font-medium">Генерируем PDF...</p>
+            <p className="text-xs text-gray-400 mt-1">Компиляция выполняется в фоне</p>
+          </div>
+        ) : pdfUrl ? (
+          <iframe
+            src={pdfUrl}
+            className="w-full h-full border-none shadow-inner"
+            title="PDF Preview"
+          />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+            <FileText size={64} className="mb-4 opacity-20" />
+            <p className="text-sm font-medium">Документ ещё не скомпилирован</p>
+            <p className="text-xs mt-2">Нажмите «Компилировать», чтобы создать PDF</p>
+          </div>
+        )}
 
-        <div className="flex-1 bg-gray-200 p-4 overflow-hidden">
-          {pdfUrl ? (
-            <iframe
-              src={pdfUrl}
-              title="PDF preview"
-              className="w-full h-full bg-white border rounded"
-            />
-          ) : (
-            <div className="h-full flex items-center justify-center text-sm text-gray-500 text-center">
-              PDF появится после компиляции документа
+        {!isCompiling && compilationStatus === 'ERROR' && (
+          <div className="absolute bottom-0 left-0 right-0 max-h-[200px] overflow-y-auto bg-red-950 text-red-200 p-4 font-mono text-[10px] border-t border-red-800">
+            <div className="font-bold uppercase mb-2 border-b border-red-800 pb-1 text-red-400">
+              LaTeX Error Log:
             </div>
-          )}
-        </div>
+            {compilationLog}
+          </div>
+        )}
       </aside>
       <TableInsertModal
         open={isTableModalOpen}

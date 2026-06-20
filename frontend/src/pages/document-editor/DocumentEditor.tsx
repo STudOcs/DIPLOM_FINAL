@@ -1,5 +1,5 @@
 // src/pages/document-editor/DocumentEditor.tsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, Loader2, Check, Play, Download, FileText, ArrowLeft, FileDown, FileCode2 } from 'lucide-react';
 import { htmlToLatex } from '../../shared/lib/latex/htmlToLatex';
@@ -41,7 +41,7 @@ const DocumentEditor = () => {
   // Состояния интерфейса
   const [isCodeMode, setIsCodeMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [isCompiling, setIsCompiling] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -49,10 +49,14 @@ const DocumentEditor = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedContent = useRef<string>('');
+  const isInitialLoadFinished = useRef(false);
 
   useEffect(() => {
     return () => {
       if (pollingInterval.current) clearInterval(pollingInterval.current);
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     };
   }, []);
 
@@ -82,6 +86,9 @@ const DocumentEditor = () => {
         
         setContent(initial);
 
+        lastSavedContent.current = initial;
+        isInitialLoadFinished.current = true;
+
         // 2. Загружаем профиль отдельно. Если он упадет — редактор все равно будет работать
         try {
           const profile = await authService.getMe();
@@ -109,50 +116,86 @@ const DocumentEditor = () => {
     loadData();
   }, [id]);
 
+  const handleSave = useCallback(
+    async (silent = false): Promise<DocumentItem | undefined> => {
+      if (!doc || !id) return;
 
-  // Функция загрузки PDF через Blob (чтобы работала авторизация)
-  const loadPdfPreview = async (docId: number) => {
-    try {
-      const response = await $api.get(`/documents/${docId}/pdf/`, { responseType: 'blob' });
-      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      setPdfBlobUrl(url);
-    } catch (err) {
-      console.error("Ошибка загрузки PDF:", err);
+      if (!silent) {
+        setSaveStatus('saving');
+      }
+
+      try {
+        const currentTemplate = templates.find(t => t.id === doc.template_id);
+        const finalHtml = isCodeMode ? latexToHtml(content, registry) : content;
+
+        const blocks: DocumentBlock[] = [
+          {
+            id: "main-content",
+            type: "text",
+            content: { text: finalHtml },
+          },
+        ];
+
+        const { latex } = isCodeMode
+          ? { latex: content }
+          : htmlToLatex(
+              content,
+              registry,
+              currentTemplate?.latex_preambula_tmp,
+              userData
+            );
+
+        const updatedDoc = await documentService.update(doc.doc_id, {
+          title: doc.title,
+          content_json: blocks,
+          latex_source: latex,
+        });
+
+        setDoc(updatedDoc);
+        lastSavedContent.current = content;
+
+        setSaveStatus('success');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+
+        return updatedDoc;
+      } catch (err) {
+        console.error("Ошибка сохранения:", err);
+        setSaveStatus('error');
+
+        if (!silent) {
+          alert("Ошибка сохранения");
+        }
+
+        setTimeout(() => setSaveStatus('idle'), 2500);
+      }
+    },
+    [doc, id, templates, isCodeMode, content, registry, userData]
+  );
+
+  useEffect(() => {
+    if (!isInitialLoadFinished.current) return;
+    if (!doc?.doc_id) return;
+    if (isLoading) return;
+    if (isCompiling) return;
+
+    if (content === lastSavedContent.current) return;
+
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current);
     }
-  };
 
-  const handleSave = async (): Promise<DocumentItem | undefined> => {
-    if (!doc || !id) return;
     setSaveStatus('saving');
-    try {
-      const currentTemplate = templates.find(t => t.id === doc.template_id);
-      let finalHtml = isCodeMode ? latexToHtml(content, registry) : content;
 
-      const blocks: DocumentBlock[] = [{
-        id: "main-content",
-        type: "text",
-        content: { text: finalHtml }
-      }];
+    autoSaveTimer.current = setTimeout(() => {
+      handleSave(true);
+    }, 1500);
 
-      const { latex } = isCodeMode 
-        ? { latex: content } 
-        : htmlToLatex(content, registry, currentTemplate?.latex_preambula_tmp, userData);
-
-      const updatedDoc = await documentService.update(doc.doc_id, {
-        title: doc.title,
-        content_json: blocks,
-        latex_source: latex
-      });
-
-      setDoc(updatedDoc);
-      setSaveStatus('success');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-      return updatedDoc;
-    } catch (err) {
-      setSaveStatus('idle');
-      alert("Ошибка сохранения");
-    }
-  };
+    return () => {
+      if (autoSaveTimer.current) {
+        clearTimeout(autoSaveTimer.current);
+      }
+    };
+  }, [content, doc?.doc_id, isLoading, isCompiling, handleSave]);
 
   const handleCompile = async () => {
     const savedDoc = await handleSave();
@@ -161,10 +204,43 @@ const DocumentEditor = () => {
       setIsCompiling(true);
       await documentService.compile(savedDoc.doc_id);
       startPollingStatus(savedDoc.doc_id);
-      setPdfUrl(`http://127.0.0.1:8000/api/v1/documents/${savedDoc.doc_id}/pdf/`);
     } catch (e) {
       setIsCompiling(false);
     }
+  };
+
+  const getCompilationBadge = () => {
+    const status = doc?.compilation_status;
+
+    if (isCompiling || status === 'PENDING' || status === 'RUNNING') {
+      return {
+        text: status === 'PENDING' ? 'В очереди' : 'Компиляция...',
+        className: 'bg-blue-50 text-blue-700 border-blue-200',
+        dotClassName: 'bg-blue-500 animate-pulse',
+      };
+    }
+
+    if (status === 'SUCCESS') {
+      return {
+        text: 'PDF готов',
+        className: 'bg-green-50 text-green-700 border-green-200',
+        dotClassName: 'bg-green-500',
+      };
+    }
+
+    if (status === 'ERROR') {
+      return {
+        text: 'Ошибка компиляции',
+        className: 'bg-red-50 text-red-700 border-red-200',
+        dotClassName: 'bg-red-500',
+      };
+    }
+
+    return {
+      text: 'Не скомпилирован',
+      className: 'bg-gray-50 text-gray-600 border-gray-200',
+      dotClassName: 'bg-gray-400',
+    };
   };
 
   const startPollingStatus = (docId: number) => {
@@ -173,27 +249,41 @@ const DocumentEditor = () => {
     pollingInterval.current = setInterval(async () => {
       try {
         const data = await documentService.getCompileStatus(docId);
-        
-        // Логируем для отладки, чтобы видеть что присылает бэк
+
+        setDoc(prev =>
+          prev
+            ? {
+                ...prev,
+                compilation_status: data.status,
+                compilation_log: data.log || '',
+              }
+            : prev
+        );
+
         console.log("Current status:", data.status);
 
-        // Если статус уже не 'compiling', значит процесс завершен
-        if (data.status !== 'compiling') {
-          if (pollingInterval.current) clearInterval(pollingInterval.current);
-          
-          const updatedDoc = await documentService.getById(docId.toString());
-          setDoc(updatedDoc);
-          setIsCompiling(false);
+        if (data.status === 'PENDING' || data.status === 'RUNNING') {
+          return;
+        }
 
-          // ИСПРАВЛЕННАЯ ПРОВЕРКА: учитываем 'success' от бэкенда
-          if (data.status === 'compiled' || data.status === 'success') {
-            alert("Документ успешно скомпилирован!");
-            // Загружаем PDF в превью
-            loadPdfPreview(docId); 
-          } else {
-            alert("Ошибка компиляции. Проверьте LaTeX код.");
-            console.error("Log:", data.log);
+        if (pollingInterval.current) clearInterval(pollingInterval.current);
+
+        const updatedDoc = await documentService.getById(docId.toString());
+        setDoc(updatedDoc);
+        setIsCompiling(false);
+
+        if (data.status === 'SUCCESS') {
+          if (data.pdf_url) {
+            setPdfUrl(data.pdf_url);
           }
+
+          setIsCompiling(false);
+          return;
+        }
+
+        if (data.status === 'ERROR') {
+          alert(data.log || "Ошибка компиляции");
+          console.error("Log:", data.log);
         }
       } catch (err) {
         console.error("Ошибка при опросе статуса:", err);
@@ -204,15 +294,27 @@ const DocumentEditor = () => {
   };
 
   const handleDownload = async () => {
-    // ВАЖНО: проверяем статус из объекта doc
-    if (!doc || doc.compilation_status !== 'success') {
-      alert("Файл еще не готов для скачивания");
-      return;
-    }
+    if (!doc?.doc_id) return;
+
     try {
-      await documentService.downloadPdf(doc.doc_id, doc.title || 'document');
+      const status = await documentService.getCompileStatus(doc.doc_id);
+
+      if (status.status !== 'SUCCESS' || !status.pdf_url) {
+        alert('PDF ещё не готов для скачивания');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.href = status.pdf_url;
+      link.download = `${doc.title || 'document'}.pdf`;
+      link.target = '_blank';
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     } catch (err) {
-      alert("Ошибка при скачивании файла");
+      console.error('Ошибка скачивания PDF:', err);
+      alert('Не удалось скачать PDF');
     }
   };
 
@@ -277,6 +379,12 @@ const DocumentEditor = () => {
                 {doc?.title}
               </div>
 
+              <div className="text-xs text-gray-400 min-w-[120px]">
+                {saveStatus === 'saving' && 'Сохранение...'}
+                {saveStatus === 'success' && 'Сохранено'}
+                {saveStatus === 'error' && 'Ошибка сохранения'}
+              </div>
+
             </div>
 
             <div className="flex items-center gap-2">
@@ -308,7 +416,7 @@ const DocumentEditor = () => {
               </div>
 
               <button
-                onClick={handleSave}
+                onClick={() => handleSave(false)}
                 className="
                   flex items-center gap-2
                   px-3 py-2
@@ -337,15 +445,36 @@ const DocumentEditor = () => {
                 Компилировать
               </button>
 
+              {(() => {
+                const badge = getCompilationBadge();
+
+                return (
+                  <div
+                    className={`
+                      flex items-center gap-2
+                      px-3 py-2
+                      rounded-lg border
+                      text-xs font-medium
+                      ${badge.className}
+                    `}
+                    title="Статус компиляции PDF"
+                  >
+                    <span className={`w-2 h-2 rounded-full ${badge.dotClassName}`} />
+                    {badge.text}
+                  </div>
+                );
+              })()}
+
               <button
                 onClick={handleDownload}
+                disabled={doc?.compilation_status !== 'SUCCESS'}
                 className="
                   flex items-center gap-2
                   px-3 py-2
                   rounded-lg
                   border
                   hover:bg-orange-50
-                  hover:text-orange-600
+                  hover:text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed
                 "
               >
                 <FileDown size={16} />
@@ -359,16 +488,6 @@ const DocumentEditor = () => {
 
       {/* Основная рабочая область: flex-1, тоже overflow-hidden */}
       <div className="flex flex-1 overflow-hidden relative">
-        
-        {/* Сайдбар: свой скролл внутри */}
-        {/* <DocumentSidebar 
-          blocks={structure as any} 
-          onReorderBlocks={setStructure as any}
-          activeBlockId="" 
-          onSelectBlock={() => {}} // В будущем: скролл к заголовку в TipTap
-          onAddBlock={() => {}} 
-          onDeleteBlock={() => {}}
-        /> */}
 
         {/* Контейнер редактора */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#f8f9fa]">
@@ -382,6 +501,9 @@ const DocumentEditor = () => {
                 onChange={setContent} 
                 onEditorInit={setEditorInstance}
                 pdfUrl={pdfUrl}
+                isCompiling={isCompiling}
+                compilationStatus={doc?.compilation_status}
+                compilationLog={doc?.compilation_log}
               />
             )}
 
@@ -392,52 +514,9 @@ const DocumentEditor = () => {
             )}
 
           </div>
-          {/* {isCodeMode ? (
-            // РЕЖИМ КОДА: свой скролл внутри LatexCodeEditor
-            <div className="flex-1 overflow-hidden p-4">
-               <LatexCodeEditor code={content} onChange={setContent} />
-            </div>
-          ) : (
-            // ВИЗУАЛЬНЫЙ РЕЖИМ: скролл внутри TipTapEditor
-            <TipTapEditor 
-               content={content} 
-               onChange={setContent} 
-               onEditorInit={setEditorInstance} 
-            />
-          )} */}
           
         </main>
 
-        {/* Предпросмотр: фиксированный - ОБНОВЛЕН ДЛЯ ОТОБРАЖЕНИЯ PDF
-        <aside className="w-[450px] border-l bg-white hidden 2xl:flex flex-col relative shrink-0">
-           {isCompiling ? (
-             <div className="flex-1 flex flex-col items-center justify-center bg-gray-50/50 backdrop-blur-sm">
-                <Loader2 size={48} className="text-orange-600 animate-spin mb-4" />
-                <p className="text-gray-600 font-medium">Генерируем PDF...</p>
-                <p className="text-xs text-gray-400 mt-1">Это может занять до 10 секунд</p>
-             </div>
-           ) : pdfUrl ? (
-             <iframe 
-               src={pdfUrl} 
-               className="w-full h-full border-none shadow-inner"
-               title="PDF Preview"
-             />
-           ) : (
-             <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
-                <FileText size={64} className="mb-4 opacity-20" />
-                <p className="text-sm font-medium">Документ еще не скомпилирован</p>
-                <p className="text-xs mt-2">Нажмите «Компиляция», чтобы создать PDF файл по стандартам СТО СФУ</p>
-             </div>
-           )}
-
-            Окно логов при ошибке 
-           {!isCompiling && doc?.compilation_status === 'error' && (
-             <div className="absolute bottom-0 left-0 right-0 max-h-[200px] overflow-y-auto bg-red-950 text-red-200 p-4 font-mono text-[10px] border-t border-red-800">
-                <div className="font-bold uppercase mb-2 border-b border-red-800 pb-1 text-red-400">LaTeX Error Log:</div>
-                {doc.compilation_log}
-             </div>
-           )}
-        </aside> */}
       </div>
     </div>
   );

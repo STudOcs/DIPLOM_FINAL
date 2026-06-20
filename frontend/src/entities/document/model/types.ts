@@ -15,7 +15,16 @@ export interface DocumentBlock {
   };
 }
 
-export type CompilationStatus = 'not_compiled' | 'compiled' | 'success' | 'error' | 'compiling';
+export type CompilationStatus =
+  | 'IDLE'
+  | 'PENDING'
+  | 'RUNNING'
+  | 'SUCCESS'
+  | 'ERROR'
+  | 'not_compiled'
+  | 'compiling'
+  | 'compiled'
+  | 'error';
 
 export type DocStatus = CompilationStatus | 'draft'; 
 
