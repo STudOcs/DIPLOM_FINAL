@@ -43,6 +43,33 @@ services:
       redis:
         condition: service_started
 
+  worker:
+    build: ./backend
+    command: celery -A core worker -l info
+    volumes:
+      - ./backend:/app
+      - ./media:/app/media
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/report_app
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DEBUG=True
+      - PYTHONUNBUFFERED=1
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_STORAGE_BUCKET_NAME=diplom-media
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_S3_PUBLIC_ENDPOINT_URL=http://localhost:9000
+      - USE_S3=True
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+
   frontend:
     build:
       context: ./frontend

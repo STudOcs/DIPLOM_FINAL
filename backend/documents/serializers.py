@@ -32,8 +32,22 @@ class DocumentSerializer(serializers.ModelSerializer):
             "controller_degree",
             "year",
             "updated_at",
+            "compilation_status",
+            "compilation_task_id",
+            "compilation_log",
+            "pdf_file",
+            "compiled_at",
         )
-        read_only_fields = ("id", "updated_at", "raw_latex")
+        read_only_fields = (
+            "id",
+            "updated_at",
+            "raw_latex",
+            "compilation_status",
+            "compilation_task_id",
+            "compilation_log",
+            "pdf_file",
+            "compiled_at",
+        )
 
 
 class TemplateSerializer(serializers.ModelSerializer):

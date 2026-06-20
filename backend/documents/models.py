@@ -38,6 +38,24 @@ class Document(models.Model):
     
     year = models.IntegerField("Год", default=datetime.now().year)
     
+    COMPILATION_STATUS_CHOICES = [
+        ("IDLE", "Ожидает компиляции"),
+        ("PENDING", "В очереди"),
+        ("RUNNING", "Компилируется"),
+        ("SUCCESS", "Успешно"),
+        ("ERROR", "Ошибка"),
+    ]
+
+    compilation_status = models.CharField(
+        max_length=20,
+        choices=COMPILATION_STATUS_CHOICES,
+        default="IDLE",
+    )
+    compilation_task_id = models.CharField(max_length=255, blank=True)
+    compilation_log = models.TextField(blank=True)
+    pdf_file = models.CharField(max_length=500, blank=True)
+    compiled_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

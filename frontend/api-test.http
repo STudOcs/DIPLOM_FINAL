@@ -1,0 +1,37 @@
+### 1. Логин, получить JWT
+POST http://localhost:8000/api/v1/users/jwt/create/
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "admin"
+}
+
+
+### 2. Создать тестовый документ
+POST http://localhost:8000/api/v1/documents/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgxOTgxODAzLCJpYXQiOjE3ODE5NzgyMDMsImp0aSI6IjY0ZTU1NmRjNjk4ODQzMThhYjkwNTAzOTEwYTRhNzg5IiwidXNlcl9pZCI6MTB9.73SJ6aDOjCBZAx056jjz0yYd78TVk6m3f70IB8yvLkQ
+
+{
+  "title": "Тест компиляции PDF",
+  "lab_number": 1,
+  "content_json": [
+    {
+      "id": "test-text-1",
+      "type": "text",
+      "content": {
+        "text": "Это тестовый текст для проверки компиляции PDF."
+      }
+    }
+  ]
+}
+
+
+### 3. Запустить компиляцию PDF
+POST http://localhost:8000/api/v1/documents/11/compile/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgxOTgyNTU4LCJpYXQiOjE3ODE5Nzg5NTgsImp0aSI6IjIwNWM4N2YyYzBhNjQwMDliOTRkZWFkY2Q5NWZlNDhhIiwidXNlcl9pZCI6MTB9.0btqiWxQmwAOZ_ZGHKgOupRJYfHl418DV8h9ucKgFRM
+
+### Проверить статус
+GET http://localhost:8000/api/v1/documents/11/status/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgxOTgyNTU4LCJpYXQiOjE3ODE5Nzg5NTgsImp0aSI6IjIwNWM4N2YyYzBhNjQwMDliOTRkZWFkY2Q5NWZlNDhhIiwidXNlcl9pZCI6MTB9.0btqiWxQmwAOZ_ZGHKgOupRJYfHl418DV8h9ucKgFRM

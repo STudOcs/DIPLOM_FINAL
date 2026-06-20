@@ -5,6 +5,8 @@ from django.conf import settings
 from .models import Document, Template
 from .serializers import DocumentSerializer, TemplateSerializer
 from .services import LatexService
+from django.core.files.storage import default_storage
+from .tasks import compile_pdf_task
 
 
 class TemplateViewSet(viewsets.ReadOnlyModelViewSet):
@@ -44,14 +46,45 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def compile(self, request, pk=None):
         document = self.get_object()
-        service = LatexService()
 
-        # Генерируем PDF
-        pdf_relative_path, error_log = service.compile_pdf(document)
+        task = compile_pdf_task.delay(document.id)
 
-        if pdf_relative_path:
-            # Ссылка на файл для фронтенда
-            pdf_url = request.build_absolute_uri(settings.MEDIA_URL + pdf_relative_path)
-            return Response({"status": "success", "pdf_url": pdf_url})
-        else:
-            return Response({"status": "error", "log": error_log}, status=400)
+        document.compilation_status = "PENDING"
+        document.compilation_task_id = task.id
+        document.compilation_log = ""
+        document.save(
+            update_fields=[
+                "compilation_status",
+                "compilation_task_id",
+                "compilation_log",
+                "updated_at",
+            ]
+        )
+
+        return Response(
+            {
+                "status": "PENDING",
+                "task_id": task.id,
+                "document_id": document.id,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
+    
+    @action(detail=True, methods=["get"], url_path="status")
+    def compile_status(self, request, pk=None):
+        document = self.get_object()
+
+        pdf_url = None
+        if document.pdf_file:
+            pdf_url = default_storage.url(document.pdf_file)
+
+        return Response(
+            {
+                "document_id": document.id,
+                "status": document.compilation_status,
+                "task_id": document.compilation_task_id,
+                "log": document.compilation_log,
+                "pdf_url": pdf_url,
+                "compiled_at": document.compiled_at,
+            }
+        )
