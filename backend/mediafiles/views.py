@@ -2,12 +2,14 @@ from rest_framework import permissions, status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication 
 
 from .models import MediaAsset
 from .serializers import MediaAssetSerializer
 
 
 class MediaUploadView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
