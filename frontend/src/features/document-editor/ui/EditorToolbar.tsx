@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 // Импортируем всё как Icons, чтобы заработал твой код
 import * as Icons from 'lucide-react';
+import { mediaService } from '../../../shared/api/mediaService';
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -16,6 +17,16 @@ interface ToolbarProps {
 export const EditorToolbar = ({ editor, onOpenTableModal }: ToolbarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   if (!editor) return null;
+
+  const setNumberedHeading = (level: 1 | 2 | 3 | 4) => {
+    editor
+      .chain()
+      .focus()
+      .setHeading({ level })
+      .updateAttributes('heading', { headingKind: 'numbered' })
+      .insertContent('<p></p>')
+      .run();
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,7 +67,67 @@ export const EditorToolbar = ({ editor, onOpenTableModal }: ToolbarProps) => {
     if (url) editor.chain().focus().setLink({ href: url }).run();
   };
 
-  
+  const insertImage = async () => {
+    if (!editor) return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/jpg,image/webp';
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      try {
+        const uploaded = await mediaService.uploadImage(file);
+
+        editor
+          .chain()
+          .focus()
+          const imageHtml = `
+            <img
+              src="${uploaded.url}"
+              data-media-id="${uploaded.id}"
+              data-storage-path="${uploaded.file}"
+            />
+            <p class="figure-title">Рисунок 1 – Название рисунка</p>
+          `;
+
+          editor.chain().focus().insertContent(imageHtml).run();
+
+          setTimeout(() => {
+            const { state, view } = editor;
+            let tr = state.tr;
+            let changed = false;
+
+            state.doc.descendants((node, pos) => {
+              if (node.type.name !== 'image') return;
+
+              const nextPos = pos + node.nodeSize;
+              const nextNode = state.doc.nodeAt(nextPos);
+
+              if (
+                nextNode?.type.name === 'paragraph' &&
+                nextNode.textContent.trim() === ''
+              ) {
+                tr = tr.delete(nextPos, nextPos + nextNode.nodeSize);
+                changed = true;
+                return false;
+              }
+            });
+
+            if (changed) {
+              view.dispatch(tr);
+            }
+          }, 0);
+      } catch (error) {
+        console.error('Ошибка загрузки изображения:', error);
+        alert('Не удалось загрузить изображение');
+      }
+    };
+
+    input.click();
+  };
 
   const btnClass = (active: boolean) =>
     `p-2 rounded transition-colors ${
@@ -79,11 +150,36 @@ export const EditorToolbar = ({ editor, onOpenTableModal }: ToolbarProps) => {
       
       <div className="w-px h-6 bg-gray-200 mx-1" />
 
-      <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={btnClass(editor.isActive('heading', { level: 1 }))}>
-        <Heading1 size={18} />
+      <button
+        onClick={() => setNumberedHeading(1)}
+        className={btnClass(editor.isActive('heading', { level: 1 }))}
+        title="Раздел"
+      >
+        <span className="text-sm font-bold">1</span>
       </button>
-      <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={btnClass(editor.isActive('heading', { level: 2 }))}>
-        <Heading2 size={18} />
+
+      <button
+        onClick={() => setNumberedHeading(2)}
+        className={btnClass(editor.isActive('heading', { level: 2 }))}
+        title="Подраздел"
+      >
+        <span className="text-sm font-bold">1.1</span>
+      </button>
+
+      <button
+        onClick={() => setNumberedHeading(3)}
+        className={btnClass(editor.isActive('heading', { level: 3 }))}
+        title="Пункт"
+      >
+        <span className="text-sm font-bold">1.1.1</span>
+      </button>
+
+      <button
+        onClick={() => setNumberedHeading(4)}
+        className={btnClass(editor.isActive('heading', { level: 4 }))}
+        title="Подпункт"
+      >
+        <span className="text-sm font-bold">1.1.1.1</span>
       </button>
 
       <div className="w-px h-6 bg-gray-200 mx-1" />
@@ -154,14 +250,11 @@ export const EditorToolbar = ({ editor, onOpenTableModal }: ToolbarProps) => {
       )}
 
       {/* Изображение */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        className="hidden" 
-        accept="image/*" 
-        onChange={handleImageUpload} 
-      />
-      <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-orange-50">
+      <button
+        onClick={insertImage}
+        className="p-2 hover:bg-orange-50 text-gray-600 rounded"
+        title="Вставить изображение"
+      >
         <Icons.Image size={18} />
       </button>
       <button 

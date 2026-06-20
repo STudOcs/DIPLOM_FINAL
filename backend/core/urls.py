@@ -22,8 +22,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/users/', include('users.urls')), # Ручки юзеров
-    path('api/v1/', include('documents.urls')), # Ручки документов
+    path('api/v1/users/', include('users.urls')),
+    path('api/v1/media/', include('mediafiles.urls')),
+    path('api/v1/', include('documents.urls')),
 ]
 
 if settings.DEBUG:
