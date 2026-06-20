@@ -1,0 +1,94 @@
+\documentclass[paper=a4, fontsize=14pt, pagesize, DIV=calc, oneside]{scrreport}
+
+% 1. ЯЗЫК И ШРИФТЫ
+\usepackage{metalogo}
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Courier New}
+
+% 2. ИНТЕРВАЛЫ И ГЕОМЕТРИЯ
+\usepackage{setspace}
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}
+\setlength{\topskip}{0pt}
+
+% 3. ПАКЕТЫ
+\usepackage[figure,table]{totalcount}
+\usepackage{totcount}
+\usepackage{totpages}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[fleqn]{amsmath}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{indentfirst} 
+\usepackage{tikz}
+\usepackage{float}
+
+% 4. БИБЛИОГРАФИЯ
+\usepackage[backend=biber, style=gost-numeric, sorting=none]{biblatex}
+\addbibresource{mybibliography.bib}
+
+% 5. ПОДКЛЮЧАЕМ ВНЕШНИЕ ФАЙЛЫ (Основа стиля теперь тут)
+\input{common.tex}
+\input{dop.tex}
+
+% 6. ГИПЕРССЫЛКИ
+\usepackage[colorlinks]{hyperref} 
+\hypersetup{colorlinks, linkcolor=black, urlcolor=black, citecolor=black}
+
+\begin{document}
+\pagestyle{empty} 
+
+\input{title.tex}
+
+\newpage
+\tableofcontents
+\newpage
+
+\pagestyle{plain}
+\setcounter{page}{2} 
+
+
+% [BLOCK_ID:intro_text:TYPE:text]
+Ниже представлено изображение, загруженное через S3 (MinIO).
+% [BLOCK_END:intro_text]
+
+
+% [BLOCK_ID:s3_image_1:TYPE:image]
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.6\textwidth]{img_1.png}
+    \caption{АААААА}
+    \label{fig:s3_image_1}
+\end{figure}
+
+% [BLOCK_END:s3_image_1]
+
+
+% [BLOCK_ID:table_1:TYPE:table]
+\begin{table}[htbp]
+    \caption{ Список студентов }
+    \label{tab:table_1}
+    \begin{tabularx}{\textwidth}{ |X|X| }
+        \toprule
+        ФИО & Группа \\
+        \midrule
+        Иванов И.И. & КИ21-01 \\
+        Петров П.П. & КИ21-02
+        \bottomrule
+    \end{tabularx}
+\end{table}
+% [BLOCK_END:table_1]
+
+
+\newpage
+\printbibliography[heading=bibintoc, title={Список использованных источников}]
+
+\end{document}

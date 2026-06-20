@@ -44,6 +44,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def compile(self, request, pk=None):
         document = self.get_object()
+        print(f"DEBUG: Compiling document ID: {document.id}")
+        
         service = LatexService()
 
         # Генерируем PDF
@@ -55,3 +57,27 @@ class DocumentViewSet(viewsets.ModelViewSet):
             return Response({"status": "success", "pdf_url": pdf_url})
         else:
             return Response({"status": "error", "log": error_log}, status=400)
+    
+    @action(detail=True, methods=['get'])
+    def raw_code(self, request, pk=None):
+        document = self.get_object()
+        service = LatexService()
+        code = service.get_raw_code(document)
+        return Response({"raw_latex": code})
+
+    @action(detail=True, methods=['post'])
+    def sync_code(self, request, pk=None):
+        document = self.get_object()
+        raw_latex = request.data.get('raw_latex')
+        
+        if not raw_latex:
+            return Response({"error": "No code provided"}, status=400)
+            
+        service = LatexService()
+        # Синхронизируем
+        document = service.sync_raw_to_json(document, raw_latex)
+        document.save()
+        
+        # Возвращаем обновленный JSON-документа, чтобы фронт обновил блоки
+        serializer = self.get_serializer(document)
+        return Response(serializer.data)

@@ -1,6 +1,5 @@
-% [BLOCK_START:[[ block_id ]]:TYPE:table]
 \begin{table}[htbp]
-    \caption{ [[ caption ]] }
+    \caption{ [[ caption | default("Таблица") | escape_latex ]] }
     \label{tab:[[ block_id ]]}
     \begin{tabularx}{\textwidth}{ [[ column_spec | default('|X|X|') ]] }
         \toprule
@@ -10,4 +9,3 @@
         \bottomrule
     \end{tabularx}
 \end{table}
-% [BLOCK_END:[[ block_id ]]]
