@@ -17,6 +17,16 @@ export const EditorToolbar = ({ editor, onOpenTableModal }: ToolbarProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   if (!editor) return null;
 
+  const setNumberedHeading = (level: 1 | 2 | 3 | 4) => {
+    editor
+      .chain()
+      .focus()
+      .setHeading({ level })
+      .updateAttributes('heading', { headingKind: 'numbered' })
+      .insertContent('<p></p>')
+      .run();
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && editor) {
@@ -79,11 +89,36 @@ export const EditorToolbar = ({ editor, onOpenTableModal }: ToolbarProps) => {
       
       <div className="w-px h-6 bg-gray-200 mx-1" />
 
-      <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={btnClass(editor.isActive('heading', { level: 1 }))}>
-        <Heading1 size={18} />
+      <button
+        onClick={() => setNumberedHeading(1)}
+        className={btnClass(editor.isActive('heading', { level: 1 }))}
+        title="Раздел"
+      >
+        <span className="text-sm font-bold">1</span>
       </button>
-      <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={btnClass(editor.isActive('heading', { level: 2 }))}>
-        <Heading2 size={18} />
+
+      <button
+        onClick={() => setNumberedHeading(2)}
+        className={btnClass(editor.isActive('heading', { level: 2 }))}
+        title="Подраздел"
+      >
+        <span className="text-sm font-bold">1.1</span>
+      </button>
+
+      <button
+        onClick={() => setNumberedHeading(3)}
+        className={btnClass(editor.isActive('heading', { level: 3 }))}
+        title="Пункт"
+      >
+        <span className="text-sm font-bold">1.1.1</span>
+      </button>
+
+      <button
+        onClick={() => setNumberedHeading(4)}
+        className={btnClass(editor.isActive('heading', { level: 4 }))}
+        title="Подпункт"
+      >
+        <span className="text-sm font-bold">1.1.1.1</span>
       </button>
 
       <div className="w-px h-6 bg-gray-200 mx-1" />

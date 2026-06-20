@@ -881,3 +881,126 @@ html, body, #root {
   font-family: "Times New Roman", Times, serif;
   font-size: 12pt;
 }
+
+.ProseMirror.sfu-document-content p.table-title {
+  text-indent: 0 !important;
+  text-align: left !important;
+  margin: 0 0 1mm 0 !important;
+  padding: 0 !important;
+  line-height: 1.2 !important;
+  font-size: 14pt !important;
+}
+
+.ProseMirror.sfu-document-content p.table-title + .tableWrapper,
+.ProseMirror.sfu-document-content p.table-title + table {
+  margin-top: 0 !important;
+}
+
+.ProseMirror.sfu-document-content .tableWrapper {
+  margin-top: 0 !important;
+}
+
+.ProseMirror.sfu-document-content table {
+  margin-top: 0 !important;
+}
+
+.ProseMirror.sfu-document-content h1[data-heading-kind="structural"] {
+  text-align: center !important;
+  text-indent: 0 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 14pt !important;
+  line-height: 1.5 !important;
+  margin: 0 0 14pt 0 !important;
+  margin-bottom: 1.5em !important;
+}
+
+.ProseMirror.sfu-document-content h1[data-heading-kind="numbered"],
+.ProseMirror.sfu-document-content h2[data-heading-kind="numbered"],
+.ProseMirror.sfu-document-content h3[data-heading-kind="numbered"],
+.ProseMirror.sfu-document-content h4[data-heading-kind="numbered"] {
+  text-align: left !important;
+  text-indent: 1.25cm !important;
+  font-weight: 700 !important;
+  font-size: 14pt !important;
+  line-height: 1.5 !important;
+  margin: 14pt 0 0 0 !important;
+  margin-bottom: 1.5em !important;
+}
+
+.ProseMirror.sfu-document-content ul,
+.ProseMirror.sfu-document-content ol {
+  margin: 0 0 0 1.25cm !important;
+  padding: 0 !important;
+}
+
+.ProseMirror.sfu-document-content ul {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ProseMirror.sfu-document-content ul li {
+  margin: 0 !important;
+  padding: 0 !important;
+  text-indent: 1.25cm !important;
+}
+
+.ProseMirror.sfu-document-content ul li::before {
+  content: "- " !important;
+}
+
+.ProseMirror.sfu-document-content ul li p {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-indent: 0 !important;
+}
+
+.ProseMirror.sfu-document-content ol {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style-position: inside !important;
+}
+
+.ProseMirror.sfu-document-content ol li {
+  margin: 0 !important;
+  padding: 0 !important;
+  text-indent: 1.25cm !important;
+}
+
+.ProseMirror.sfu-document-content ol li p {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-indent: 0 !important;
+}
+
+.generated-toc {
+  margin-top: 1em;
+}
+
+.generated-toc .toc-item {
+  text-indent: 1.25cm;
+  margin: 0;
+  padding: 0;
+}
+
+.ProseMirror.sfu-document-content p.toc-item {
+  text-indent: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  column-gap: 0.3cm !important;
+
+  font-size: 14pt !important;
+  line-height: 1.5 !important;
+}
+
+.ProseMirror.sfu-document-content p.toc-item::after {
+  content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .";
+  overflow: hidden;
+  white-space: nowrap;
+}
