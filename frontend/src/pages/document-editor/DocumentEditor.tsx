@@ -36,6 +36,8 @@ const DocumentEditor = () => {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [userData, setUserData] = useState<TitleData | null>(null);
   const [content, setContent] = useState('');
+  const [rawCode, setRawCode] = useState('');
+  const [isSyncingCode, setIsSyncingCode] = useState(false);
   const [registry, setRegistry] = useState<ImageRegistry>({});
   
   // Состояния интерфейса
@@ -115,6 +117,50 @@ const DocumentEditor = () => {
 
     loadData();
   }, [id]);
+
+  const switchToLatexMode = async () => {
+    if (!doc?.doc_id) return;
+
+    try {
+      setIsSyncingCode(true);
+
+      const data = await documentService.getRawCode(doc.doc_id);
+
+      setRawCode(data.raw_latex);
+      setEditorMode('LaTeX');
+    } catch (err) {
+      console.error('Ошибка загрузки RAW LaTeX:', err);
+      alert('Не удалось загрузить LaTeX-код');
+    } finally {
+      setIsSyncingCode(false);
+    }
+  };
+
+  const switchToVisualMode = async () => {
+    if (!doc?.doc_id) return;
+
+    try {
+      setIsSyncingCode(true);
+
+      const updatedDoc = await documentService.syncCode(doc.doc_id, rawCode);
+
+      setDoc(updatedDoc);
+
+      const updatedHtml = Array.isArray(updatedDoc.content_json)
+        ? blocksToHtml(updatedDoc.content_json)
+        : '';
+
+      setContent(updatedHtml);
+      lastSavedContent.current = updatedHtml;
+
+      setEditorMode('Визуал');
+    } catch (err) {
+      console.error('Ошибка синхронизации RAW LaTeX:', err);
+      alert('Не удалось синхронизировать LaTeX-код');
+    } finally {
+      setIsSyncingCode(false);
+    }
+  };
 
   const handleSave = useCallback(
     async (silent = false): Promise<DocumentItem | undefined> => {
@@ -392,27 +438,28 @@ const DocumentEditor = () => {
               <div className="flex rounded-lg border overflow-hidden">
 
                 <button
-                  onClick={() => setEditorMode('Визуал')}
+                  onClick={switchToVisualMode}
+                  disabled={editorMode === 'Визуал' || isSyncingCode}
                   className={`px-3 py-2 text-sm ${
                     editorMode === 'Визуал'
                       ? 'bg-orange-50 text-orange-600'
                       : 'bg-white text-gray-600'
-                  }`}
+                  } disabled:opacity-60`}
                 >
                   Визуал
                 </button>
 
                 <button
-                  onClick={() => setEditorMode('LaTeX')}
+                  onClick={switchToLatexMode}
+                  disabled={editorMode === 'LaTeX' || isSyncingCode}
                   className={`px-3 py-2 text-sm ${
                     editorMode === 'LaTeX'
                       ? 'bg-orange-50 text-orange-600'
                       : 'bg-white text-gray-600'
-                  }`}
+                  } disabled:opacity-60`}
                 >
                   LaTeX
                 </button>
-
               </div>
 
               <button
@@ -508,9 +555,10 @@ const DocumentEditor = () => {
             )}
 
             {editorMode === 'LaTeX' && (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                LaTeX режим будет реализован позже
-              </div>
+              <LatexCodeEditor
+                code={rawCode}
+                onChange={setRawCode}
+              />
             )}
 
           </div>

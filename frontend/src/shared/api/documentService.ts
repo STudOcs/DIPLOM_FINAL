@@ -59,6 +59,19 @@ export const documentService = {
     return data;
   },
 
+  async getRawCode(id: number): Promise<{ raw_latex: string }> {
+    const { data } = await $api.get(`/documents/${id}/raw_code/`);
+    return data;
+  },
+
+  async syncCode(id: number, rawLatex: string): Promise<DocumentItem> {
+    const { data } = await $api.post<ApiDocumentItem>(`/documents/${id}/sync_code/`, {
+      raw_latex: rawLatex,
+    });
+
+    return normalizeDocument(data);
+  },
+
   async downloadPdf(docId: number, fileName: string) {
     const status = await this.getCompileStatus(docId);
 
