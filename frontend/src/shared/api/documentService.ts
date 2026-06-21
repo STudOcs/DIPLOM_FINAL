@@ -72,19 +72,52 @@ export const documentService = {
     return normalizeDocument(data);
   },
 
-  async downloadPdf(docId: number, fileName: string) {
-    const status = await this.getCompileStatus(docId);
+  async getPdfBlob(docId: number): Promise<Blob> {
+    const response = await $api.get(`/documents/${docId}/pdf/`, {
+      responseType: 'blob',
+    });
 
-    if (status.status !== 'SUCCESS' || !status.pdf_url) {
-      throw new Error('PDF ещё не готов');
+    const contentType = response.headers['content-type'] || '';
+
+    if (!contentType.includes('application/pdf')) {
+      const errorText = await response.data.text();
+      throw new Error(errorText || 'Backend вернул не PDF-файл');
     }
 
+    const blob = new Blob([response.data], {
+      type: 'application/pdf',
+    });
+
+    if (blob.size === 0) {
+      throw new Error('PDF-файл пустой');
+    }
+
+    const header = await blob.slice(0, 5).text();
+
+    if (header !== '%PDF-') {
+      throw new Error('Скачанный файл не является корректным PDF');
+    }
+
+    return blob;
+  },
+
+  async getPdfObjectUrl(docId: number): Promise<string> {
+    const blob = await this.getPdfBlob(docId);
+    return window.URL.createObjectURL(blob);
+  },
+
+  async downloadPdf(docId: number, fileName: string) {
+    const blob = await this.getPdfBlob(docId);
+    const url = window.URL.createObjectURL(blob);
+
     const link = document.createElement('a');
-    link.href = status.pdf_url;
-    link.download = `${fileName}.pdf`;
-    link.target = '_blank';
+    link.href = url;
+    link.download = `${fileName || 'document'}.pdf`;
+
     document.body.appendChild(link);
     link.click();
     link.remove();
+
+    window.URL.revokeObjectURL(url);
   },
 };

@@ -313,8 +313,18 @@ const DocumentEditor = () => {
         setIsCompiling(false);
 
         if (data.status === 'SUCCESS') {
-          if (data.pdf_url) {
-            setPdfUrl(data.pdf_url);
+          try {
+            const objectUrl = await documentService.getPdfObjectUrl(docId);
+            setPdfUrl(prev => {
+              if (prev?.startsWith('blob:')) {
+                window.URL.revokeObjectURL(prev);
+              }
+
+              return objectUrl;
+            });
+          } catch (err) {
+            console.error('Ошибка загрузки PDF для предпросмотра:', err);
+            setPdfUrl(null);
           }
 
           setIsCompiling(false);
@@ -339,22 +349,23 @@ const DocumentEditor = () => {
     try {
       const status = await documentService.getCompileStatus(doc.doc_id);
 
-      if (status.status !== 'SUCCESS' || !status.pdf_url) {
+      if (status.status !== 'SUCCESS') {
         alert('PDF ещё не готов для скачивания');
         return;
       }
 
-      const link = document.createElement('a');
-      link.href = status.pdf_url;
-      link.download = `${doc.title || 'document'}.pdf`;
-      link.target = '_blank';
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      await documentService.downloadPdf(
+        doc.doc_id,
+        doc.title || 'document',
+      );
     } catch (err) {
       console.error('Ошибка скачивания PDF:', err);
-      alert('Не удалось скачать PDF');
+
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Не удалось скачать PDF'
+      );
     }
   };
 

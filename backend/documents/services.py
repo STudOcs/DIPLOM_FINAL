@@ -9,6 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 from django.conf import settings
 from django.core.files.storage import default_storage
 
+
 class LatexService:
     def __init__(self):
         self.template_base_path = os.path.join(settings.BASE_DIR, 'latex_core', 'templates')
@@ -49,40 +50,65 @@ class LatexService:
                 
                 # --- ЛОГИКА ДЛЯ КАРТИНОК В RAW РЕДАКТОРЕ ---
                 if b_type == 'image' and not block_content.get('image_path'):
-                    # Если мы просто смотрим код и нет локального пути, 
-                    # вытаскиваем имя файла из URL для отображения
-                    img_url = block_content.get('url') or block_content.get('src')
-                    if img_url:
-                        # Превращаем http://.../media/2/photo.png в photo.png
-                        block_content['image_path'] = os.path.basename(urlparse(img_url).path)
+                    storage_path = (
+                        block_content.get('storage_path')
+                        or block_content.get('file')
+                        or ""
+                    )
+
+                    img_url = block_content.get('url') or block_content.get('src') or ""
+
+                    if storage_path:
+                        block_content['image_path'] = storage_path
+                    elif img_url:
+                        block_content['image_path'] = os.path.basename(
+                            urlparse(img_url).path
+                        )
                     else:
                         block_content['image_path'] = "placeholder.png"
                 
                 if b_type == 'table':
-                    if 'rows' in block_content:
-                        # Экранируем каждую ячейку в каждом ряду
-                        raw_rows = block_content['rows']
-                        escaped_rows = []
-                        for row in raw_rows:
-                            escaped_rows.append([self.escape_latex(str(cell)) for cell in row])
-                        
-                        if escaped_rows:
-                            # 1. Шапка
-                            block_content['header_row'] = " & ".join(escaped_rows[0])
-                            
-                            # 2. Тело
-                            if len(escaped_rows) > 1:
-                                body_parts = [" & ".join(r) for r in escaped_rows[1:]]
-                                # Обязательно завершаем каждую строку символом \\
-                                block_content['body_rows'] = " \\\\\n        ".join(body_parts) + " \\\\"
-                            else:
-                                block_content['body_rows'] = ""
+                    rows = block_content.get('rows') or []
+
+                    escaped_rows = []
+                    for row in rows:
+                        escaped_rows.append([
+                            self.escape_latex(str(cell)) for cell in row
+                        ])
+
+                    column_count = max(
+                        [len(row) for row in escaped_rows],
+                        default=2,
+                    )
+
+                    if not block_content.get('column_spec'):
+                        block_content['column_spec'] = (
+                            "|" + "|".join(["X"] * column_count) + "|"
+                        )
+
+                    if escaped_rows:
+                        block_content['header_row'] = " & ".join(escaped_rows[0])
+
+                        if len(escaped_rows) > 1:
+                            body_parts = [
+                                " & ".join(row) for row in escaped_rows[1:]
+                            ]
+                            block_content['body_rows'] = (
+                                " \\\\\n        ".join(body_parts) + " \\\\"
+                            )
+                        else:
+                            block_content['body_rows'] = ""
+                    else:
+                        block_content['header_row'] = ""
+                        block_content['body_rows'] = ""
 
                 if b_type == 'list':
                     raw_items = block_content.get('items', [])
+
                     block_content['items'] = [
                         self.escape_latex(str(item)) for item in raw_items
                     ]
+
                     block_content['environment'] = (
                         'enumerate' if block_content.get('ordered') else 'itemize'
                     )
@@ -163,12 +189,34 @@ class LatexService:
             result = subprocess.run(['xelatex', '-interaction=nonstopmode', 'main.tex'], **run_cmd)
 
             pdf_path = os.path.join(build_dir, 'main.pdf')
-            
-            if os.path.exists(pdf_path):
-                relative_path = os.path.join('latex_temp', file_id, 'main.pdf')
-                return relative_path, None
-            else:
-                return None, f"LaTeX Error:\n{result.stdout}"
+
+            if not os.path.exists(pdf_path):
+                return None, f"LaTeX Error:\n{result.stdout}\n{result.stderr}"
+
+            if os.path.getsize(pdf_path) == 0:
+                return None, f"LaTeX создал пустой PDF:\n{result.stdout}\n{result.stderr}"
+
+            with open(pdf_path, "rb") as pdf_check:
+                header = pdf_check.read(5)
+
+            if header != b"%PDF-":
+                return None, f"LaTeX создал некорректный PDF:\n{result.stdout}\n{result.stderr}"
+
+            if not os.path.exists(pdf_path):
+                return None, f"LaTeX Error:\n{result.stdout}\n{result.stderr}"
+
+            with open(pdf_path, "rb") as f:
+                pdf_data = f.read()
+
+            if not pdf_data.startswith(b"%PDF-") or b"%%EOF" not in pdf_data[-2048:]:
+                return None, (
+                    "LaTeX создал повреждённый PDF\n\n"
+                    f"STDOUT:\n{result.stdout}\n\n"
+                    f"STDERR:\n{result.stderr}"
+    )
+
+            relative_path = os.path.join('latex_temp', file_id, 'main.pdf')
+            return relative_path, None
 
         except subprocess.TimeoutExpired:
             return None, "Превышено время ожидания компиляции (80 сек)."
@@ -189,46 +237,68 @@ class LatexService:
         walk(blocks)
         return images
 
-    def _storage_name_from_url(self, url):
-        if not url: return ""
-        parsed = urlparse(url)
-        path = unquote(parsed.path).lstrip("/")
-        bucket = getattr(settings, "AWS_STORAGE_BUCKET_NAME", "")
-        if bucket and path.startswith(f"{bucket}/"):
-            path = path[len(bucket) + 1:]
-        return path
+    def _storage_name_from_url(self, value):
+        if not value:
+            return ""
 
-    def _prepare_images_for_latex(self, blocks, temp_dir):
-        """Скачивает изображения из S3 локально для компилятора"""
-        prepared_blocks = copy.deepcopy(blocks)
-        image_blocks = self._find_image_blocks(prepared_blocks)
+        value = str(value).strip()
 
-        for index, block in enumerate(image_blocks, start=1):
-            content = block.setdefault("content", {})
-            
-            # Определяем путь к файлу в хранилище
-            source = content.get("image_path") or content.get("url") or content.get("src")
-            storage_name = content.get("file") or self._storage_name_from_url(source)
+        if value.startswith("http://") or value.startswith("https://"):
+            parsed = urlparse(value)
+            path = parsed.path.lstrip("/")
+
+            bucket_name = getattr(settings, "AWS_STORAGE_BUCKET_NAME", "")
+
+            if bucket_name and path.startswith(f"{bucket_name}/"):
+                path = path[len(bucket_name) + 1:]
+
+            return path
+
+        return value.lstrip("/")
+
+    def _prepare_images_for_latex(self, content_json, build_dir):
+        prepared_blocks = copy.deepcopy(content_json or [])
+        image_index = 1
+
+        for block in self._find_image_blocks(prepared_blocks):
+            content = block.get("content", {})
+
+            image_ref = (
+                content.get("storage_path")
+                or content.get("file")
+                or content.get("image_path")
+                or content.get("url")
+                or content.get("src")
+            )
+
+            storage_name = self._storage_name_from_url(image_ref)
 
             if not storage_name:
                 continue
 
-            ext = os.path.splitext(storage_name)[1] or ".png"
-            local_name = f"img_{index}{ext}"
-            local_path = os.path.join(temp_dir, local_name)
+            _, ext = os.path.splitext(storage_name)
+            ext = ext or ".png"
+
+            local_name = f"img_{image_index}{ext}"
+            local_path = os.path.join(build_dir, local_name)
 
             try:
-                # Скачиваем из MinIO/S3 во временную папку компиляции
                 with default_storage.open(storage_name, "rb") as src:
                     with open(local_path, "wb") as dst:
-                        dst.write(src.read())
-                
-                # ВАЖНО: Подменяем путь на локальный для шаблона .j2
+                        shutil.copyfileobj(src, dst)
+
                 content["image_path"] = local_name
-            except Exception as e:
-                content["image_path"] = ""
-                content["caption"] = f"Ошибка загрузки: {str(e)}"
-        
+                content["file"] = local_name
+                content["storage_path"] = storage_name
+
+                block["content"] = content
+                image_index += 1
+
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Не удалось подготовить изображение {storage_name}: {exc}"
+                )
+
         return prepared_blocks
     
     def sync_raw_to_json(self, document, full_raw_latex):
@@ -329,48 +399,78 @@ class LatexService:
             }
 
         elif b_type == 'image':
-            # 1. Вытаскиваем ширину из [width=0.6\textwidth]
-            width_match = re.search(r'width\s*=\s*([\d\.]+)', inner)
-            # 2. Вытаскиваем подпись из \caption{...}
-            caption_match = re.search(r'\\caption\s*{(.*?)}', inner, re.DOTALL)
-            
-            # Формируем обновленный контент
+            width_match = re.search(r'width\s*=\s*([\d.]+)', inner)
+            caption_match = re.search(
+                r'\\caption\s*{(.*?)}',
+                inner,
+                re.DOTALL,
+            )
+
             return {
-                # Сохраняем ссылки на S3 из старого контента
                 "url": old_content.get("url", ""),
+                "src": old_content.get("src", old_content.get("url", "")),
+                "file": old_content.get("file", ""),
+                "storage_path": old_content.get("storage_path", ""),
                 "image_path": old_content.get("image_path", ""),
-                # Обновляем то, что юзер мог поменять в коде
-                "caption": caption_match.group(1).strip() if caption_match else old_content.get("caption", ""),
-                "width": float(width_match.group(1)) if width_match else old_content.get("width", 0.8)
+                "caption": self.unescape_latex(
+                    caption_match.group(1).strip()
+                ) if caption_match else old_content.get("caption", ""),
+                "width": float(width_match.group(1))
+                if width_match
+                else old_content.get("width", 0.8),
             }
 
         elif b_type == 'table':
-            # 1. Вытаскиваем заголовок
-            caption_match = re.search(r'\\caption\s*{(.*?)}', inner, re.DOTALL)
-            
-            # 2. ИСПРАВЛЕННЫЙ REGEX: пропускаем первый аргумент {..} и берем второй
-            col_spec_match = re.search(r'\\begin{tabularx}\s*{.*?}\s*{(.*?)}', inner, re.DOTALL)
-            
-            # 3. Вытаскиваем строки между \toprule и \bottomrule
-            content_match = re.search(r'\\toprule(.*?)\\bottomrule', inner, re.DOTALL)
-            
+            caption_match = re.search(
+                r'\\caption\s*{(.*?)}',
+                inner,
+                re.DOTALL,
+            )
+
+            col_spec_match = re.search(
+                r'\\begin{tabularx}\s*{.*?}\s*{(.*?)}',
+                inner,
+                re.DOTALL,
+            )
+
+            content_match = re.search(
+                r'\\toprule(.*?)\\bottomrule',
+                inner,
+                re.DOTALL,
+            )
+
             rows = []
+
             if content_match:
-                raw_content = content_match.group(1).strip()
-                raw_content = raw_content.replace(r'\midrule', '') # Убираем разделитель
-                
-                # Делим на строки
-                raw_rows = [r.strip() for r in raw_content.split(r'\\') if r.strip()]
-                
+                raw_content = content_match.group(1)
+
+                raw_content = raw_content.replace(r'\midrule', '')
+                raw_content = raw_content.replace(r'\toprule', '')
+                raw_content = raw_content.replace(r'\bottomrule', '')
+
+                raw_rows = [
+                    row.strip()
+                    for row in raw_content.split(r'\\')
+                    if row.strip()
+                ]
+
                 for row in raw_rows:
-                    # Делим на ячейки
-                    cells = [self.unescape_latex(c.strip()) for c in row.split('&')]
-                    rows.append(cells)
+                    cells = [
+                        self.unescape_latex(cell.strip())
+                        for cell in re.split(r'(?<!\\)&', row)
+                    ]
+
+                    if cells:
+                        rows.append(cells)
 
             return {
-                "caption": caption_match.group(1).strip() if caption_match else "Таблица",
-                "column_spec": col_spec_match.group(1).strip() if col_spec_match else "|X|X|",
-                "rows": rows
+                "caption": self.unescape_latex(
+                    caption_match.group(1).strip()
+                ) if caption_match else old_content.get("caption", "Название таблицы"),
+                "column_spec": col_spec_match.group(1).strip()
+                if col_spec_match
+                else old_content.get("column_spec", "|X|X|"),
+                "rows": rows,
             }
         
         elif b_type == 'list':
@@ -381,7 +481,10 @@ class LatexService:
             )
 
             if not env_match:
-                return old_content if old_content else {"items": [], "ordered": False}
+                return old_content if old_content else {
+                    "ordered": False,
+                    "items": [],
+                }
 
             environment = env_match.group(1)
             list_body = env_match.group(2)

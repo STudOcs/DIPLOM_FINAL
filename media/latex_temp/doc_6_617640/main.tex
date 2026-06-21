@@ -1,0 +1,273 @@
+\documentclass[paper=a4, fontsize=14pt, pagesize, DIV=calc, oneside]{scrreport}
+
+% 1. ЯЗЫК И ШРИФТЫ
+\usepackage{metalogo}
+\usepackage{polyglossia} 
+\setdefaultlanguage{russian} 
+\setotherlanguage{english} 
+\setmainfont{Times New Roman}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Courier New}
+
+% 2. ИНТЕРВАЛЫ И ГЕОМЕТРИЯ
+\usepackage{setspace}
+\usepackage[top=20mm, bottom=20mm, left=30mm, right=10mm, includefoot]{geometry}
+\setlength{\topskip}{0pt}
+
+% 3. ПАКЕТЫ
+\usepackage[figure,table]{totalcount}
+\usepackage{totcount}
+\usepackage{totpages}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[fleqn]{amsmath}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{indentfirst} 
+\usepackage{tikz}
+\usepackage{float}
+
+% 4. БИБЛИОГРАФИЯ
+\usepackage[backend=biber, style=gost-numeric, sorting=none]{biblatex}
+\addbibresource{mybibliography.bib}
+
+% 5. ПОДКЛЮЧАЕМ ВНЕШНИЕ ФАЙЛЫ (Основа стиля теперь тут)
+\input{common.tex}
+\input{dop.tex}
+
+% 6. ГИПЕРССЫЛКИ
+\usepackage[colorlinks]{hyperref} 
+\hypersetup{colorlinks, linkcolor=black, urlcolor=black, citecolor=black}
+
+\begin{document}
+\pagestyle{empty} 
+
+\input{title.tex}
+
+\newpage
+\tableofcontents
+\newpage
+
+\pagestyle{plain}
+\setcounter{page}{2} 
+
+
+% [BLOCK_ID:heading-cd7d8ed7-1eaa-4f6b-a6c7-2ce79460cbd4:TYPE:heading]
+
+\chapter*{ВВЕДЕНИЕ}
+\addcontentsline{toc}{chapter}{ВВЕДЕНИЕ}
+
+
+
+
+
+
+
+
+
+% [BLOCK_END:heading-cd7d8ed7-1eaa-4f6b-a6c7-2ce79460cbd4]
+
+
+% [BLOCK_ID:text-860e1fb1-901e-4ff2-927a-16ff0350333d:TYPE:text]
+В данном разделе описывается актуальность работы и поставленные цели...
+% [BLOCK_END:text-860e1fb1-901e-4ff2-927a-16ff0350333d]
+
+
+% [BLOCK_ID:heading-229479d1-0a9c-4890-b1db-6c7826ee8667:TYPE:heading]
+
+
+
+\chapter{Первый част}
+
+
+
+
+
+
+
+% [BLOCK_END:heading-229479d1-0a9c-4890-b1db-6c7826ee8667]
+
+
+% [BLOCK_ID:list-44264a11-45f4-429b-b7f5-316657dbe2d3:TYPE:list]
+\begin{}
+
+    \item один;
+
+    \item два;
+
+    \item три.
+
+\end{}
+% [BLOCK_END:list-44264a11-45f4-429b-b7f5-316657dbe2d3]
+
+
+% [BLOCK_ID:list-aeceaffb-ade0-4f3f-8ad8-70f5348da39e:TYPE:list]
+\begin{}
+
+    \item мркер;
+
+    \item маркер;
+
+    \item маркерр.
+
+\end{}
+% [BLOCK_END:list-aeceaffb-ade0-4f3f-8ad8-70f5348da39e]
+
+
+% [BLOCK_ID:heading-8e854c12-dc32-451e-99e8-73b2417039dc:TYPE:heading]
+
+
+
+\chapter{Вторая часть}
+
+
+
+
+
+
+
+% [BLOCK_END:heading-8e854c12-dc32-451e-99e8-73b2417039dc]
+
+
+% [BLOCK_ID:heading-dc5cf38b-7107-48cd-9bef-d91e257a459d:TYPE:heading]
+
+
+
+
+
+\section{один}
+
+
+
+
+
+% [BLOCK_END:heading-dc5cf38b-7107-48cd-9bef-d91e257a459d]
+
+
+% [BLOCK_ID:heading-93daa47e-75ff-4aef-a9f9-85df360fbd1e:TYPE:heading]
+
+
+
+
+
+
+
+\subsection{два}
+
+
+
+% [BLOCK_END:heading-93daa47e-75ff-4aef-a9f9-85df360fbd1e]
+
+
+% [BLOCK_ID:heading-c7cf1996-e612-4c7f-a973-44c78d510228:TYPE:heading]
+
+
+
+
+
+
+
+
+
+\subsubsection{три}
+
+% [BLOCK_END:heading-c7cf1996-e612-4c7f-a973-44c78d510228]
+
+
+% [BLOCK_ID:heading-5af6ab9a-35b3-4320-993f-6cdbd2a15c55:TYPE:heading]
+
+
+
+\chapter{Третья часть}
+
+
+
+
+
+
+
+% [BLOCK_END:heading-5af6ab9a-35b3-4320-993f-6cdbd2a15c55]
+
+
+% [BLOCK_ID:table-e86a8edb-b142-4fe7-acb9-5f271034e3c0:TYPE:table]
+\begin{table}[htbp]
+    \caption{бэээум}
+    \label{tab:table-e86a8edb-b142-4fe7-acb9-5f271034e3c0}
+    \begin{tabularx}{\textwidth}{|X|X|X|}
+        \toprule
+         &  &  \\
+        \midrule
+         &  &  \\
+         &  &  \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+% [BLOCK_END:table-e86a8edb-b142-4fe7-acb9-5f271034e3c0]
+
+
+% [BLOCK_ID:heading-55c38e7a-60eb-40ab-b54e-cdc07d2111f2:TYPE:heading]
+
+
+
+\chapter{ывпывпа}
+
+
+
+
+
+
+
+% [BLOCK_END:heading-55c38e7a-60eb-40ab-b54e-cdc07d2111f2]
+
+
+% [BLOCK_ID:image-41f992de-3564-4eba-9f94-932869233f51:TYPE:image]
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{7d1d5990641f47c695e5a442fb67457b.png}
+    \caption{Ошибка загрузки: File does not exist: http:/minio:9000/diplom-media/media/9/7d1d5990641f47c695e5a442fb67457b.png}
+    \label{fig:image-41f992de-3564-4eba-9f94-932869233f51}
+\end{figure}
+
+% [BLOCK_END:image-41f992de-3564-4eba-9f94-932869233f51]
+
+
+% [BLOCK_ID:heading-04bd7096-295c-4a16-902c-476b3040d0e2:TYPE:heading]
+
+\chapter*{ЗАКЛЮЧЕНИЕ}
+\addcontentsline{toc}{chapter}{ЗАКЛЮЧЕНИЕ}
+
+
+
+
+
+
+
+
+
+% [BLOCK_END:heading-04bd7096-295c-4a16-902c-476b3040d0e2]
+
+
+% [BLOCK_ID:table-1c46b2c0-5a4c-499a-8b01-c4d7105a00bb:TYPE:table]
+\begin{table}[htbp]
+    \caption{Название таблицы}
+    \label{tab:table-1c46b2c0-5a4c-499a-8b01-c4d7105a00bb}
+    \begin{tabularx}{\textwidth}{|X|X|X|}
+        \toprule
+         &  &  \\
+        \midrule
+         &  &  \\
+         &  &  \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+% [BLOCK_END:table-1c46b2c0-5a4c-499a-8b01-c4d7105a00bb]
+
+
+\newpage
+\printbibliography[heading=bibintoc, title={Список использованных источников}]
+
+\end{document}

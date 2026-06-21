@@ -32,9 +32,6 @@ export interface DocumentBlock {
 
     ordered?: boolean;
     items?: string[];
-
-    formula?: string;
-    raw_inner?: string;
   };
 }
 

@@ -1,10 +1,6 @@
-[# if image_path #]
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=[[ width | default(0.8) ]]\textwidth]{[[ image_path ]]}
-    \caption{[[ caption | default("Рисунок") | escape_latex ]]}
+    \caption{[[ caption | default("Название рисунка") | escape_latex ]]}
     \label{fig:[[ block_id ]]}
 \end{figure}
-[# else #]
-% Изображение не найдено для блока [[ block_id ]]
-[# endif #]

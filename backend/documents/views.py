@@ -3,6 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.http import FileResponse
+from urllib.parse import quote
+from django.http import HttpResponse
 
 from .models import Document, Template
 from .serializers import DocumentSerializer, TemplateSerializer
@@ -93,6 +96,41 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 "compiled_at": document.compiled_at,
             }
         )
+    
+    @action(detail=True, methods=["get"], url_path="pdf")
+    def pdf(self, request, pk=None):
+        document = self.get_object()
+
+        if document.compilation_status != "SUCCESS" or not document.pdf_file:
+            return Response({"error": "PDF ещё не готов"}, status=400)
+
+        if not default_storage.exists(document.pdf_file):
+            return Response({"error": "PDF не найден"}, status=404)
+
+        with default_storage.open(document.pdf_file, "rb") as f:
+            data = f.read()
+
+        if not data.startswith(b"%PDF-") or b"%%EOF" not in data[-2048:]:
+            return Response(
+                {
+                    "error": "Файл в хранилище повреждён или не является PDF",
+                    "size": len(data),
+                    "head": data[:20].decode("latin1", errors="replace"),
+                    "tail": data[-80:].decode("latin1", errors="replace"),
+                },
+                status=500,
+            )
+
+        filename = f"{document.title or f'document_{document.id}'}.pdf"
+
+        response = HttpResponse(data, content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'inline; filename="document_{document.id}.pdf"; '
+            f"filename*=UTF-8''{quote(filename)}"
+        )
+        response["Content-Length"] = str(len(data))
+
+        return response
 
     @action(detail=True, methods=["get"], url_path="raw_code")
     def raw_code(self, request, pk=None):
