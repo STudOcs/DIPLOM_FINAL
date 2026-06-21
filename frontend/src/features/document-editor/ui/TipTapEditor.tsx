@@ -50,6 +50,7 @@ export const TipTapEditor = ({
 }: TipTapEditorProps) => {
   const [outline, setOutline] = useState<OutlineItem[]>([]);
   const editorWrapperRef = useRef<HTMLDivElement | null>(null);
+  const normalizedOnLoadContentRef = useRef<string>('');
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
 
   const renumberTableTitles = (editor: Editor) => {
@@ -573,6 +574,21 @@ export const TipTapEditor = ({
     setOutline(headings);
   };
 
+  const normalizeDocumentOnLoad = () => {
+    if (!editor || editor.isDestroyed) return;
+
+    normalizeStructuralHeadings(editor);
+    renumberAppendices(editor);
+    renumberNumberedHeadings(editor);
+
+    renumberTableTitles(editor);
+    renumberFigureTitles(editor);
+
+    normalizeLists(editor);
+
+    updateTableOfContents(editor);
+  };
+
   const renumberTables = (editor: Editor) => {
     const root = editor.view.dom;
     const titles = Array.from(
@@ -946,6 +962,35 @@ export const TipTapEditor = ({
       clearHandles();
     };
   }, [editor, onChange]);
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    if (!content) return;
+
+    // Не запускаем автонормализацию во время ручного редактирования,
+    // иначе можно сбивать курсор.
+    if (editor.isFocused) return;
+
+    // Не повторяем нормализацию бесконечно для одного и того же содержимого.
+    if (normalizedOnLoadContentRef.current === content) return;
+
+    const timer = window.setTimeout(() => {
+      if (!editor || editor.isDestroyed) return;
+
+      normalizeDocumentOnLoad();
+
+      const normalizedHtml = editor.getHTML();
+      normalizedOnLoadContentRef.current = normalizedHtml;
+
+      if (normalizedHtml !== content) {
+        onChange(normalizedHtml);
+      }
+    }, 50);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [editor, content, onChange]);
 
   const scrollToHeading = (pos: number) => {
     if (!editor) return;

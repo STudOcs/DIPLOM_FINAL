@@ -10,22 +10,12 @@ import { DocumentItem, TemplateItem, DocumentBlock } from '../../entities/docume
 import { documentService } from '../../shared/api/documentService';
 import { authService, TitleData } from '../../shared/api/authService';
 import { $api } from '../../shared/api/base';
+import {
+  htmlToDocumentBlocks,
+  documentBlocksToHtml,
+} from '../../features/document-editor/lib/documentBlocksHtml';
 
 export type ImageRegistry = Record<string, string>; 
-
-const blocksToHtml = (blocks: DocumentBlock[]): string => {
-  return blocks.map(block => {
-    const textContent = block.content?.text || '';
-    if (block.type === 'heading') {
-      const level = block.content?.level || 1;
-      return `<h${level}>${textContent}</h${level}>`;
-    }
-    if (block.type === 'text') {
-      return textContent.startsWith('<') ? textContent : `<p>${textContent}</p>`;
-    }
-    return '';
-  }).join('');
-};
 
 const DocumentEditor = () => {
   const { id } = useParams<{ id: string }>();
@@ -82,9 +72,10 @@ const DocumentEditor = () => {
         setDoc(docData);
         setTemplates(templatesData);
         
-        const initial = Array.isArray(docData.content_json) && docData.content_json.length > 0
-          ? blocksToHtml(docData.content_json)
-          : (docData.latex_source ? latexToHtml(docData.latex_source, {}) : '');
+        const initial =
+          Array.isArray(docData.content_json) && docData.content_json.length > 0
+            ? documentBlocksToHtml(docData.content_json)
+            : (docData.latex_source ? latexToHtml(docData.latex_source, {}) : '');
         
         setContent(initial);
 
@@ -147,7 +138,7 @@ const DocumentEditor = () => {
       setDoc(updatedDoc);
 
       const updatedHtml = Array.isArray(updatedDoc.content_json)
-        ? blocksToHtml(updatedDoc.content_json)
+        ? documentBlocksToHtml(updatedDoc.content_json)
         : '';
 
       setContent(updatedHtml);
@@ -172,15 +163,18 @@ const DocumentEditor = () => {
 
       try {
         const currentTemplate = templates.find(t => t.id === doc.template_id);
-        const finalHtml = isCodeMode ? latexToHtml(content, registry) : content;
+        if (editorMode === 'LaTeX') {
+          const updatedDoc = await documentService.syncCode(doc.doc_id, rawCode);
 
-        const blocks: DocumentBlock[] = [
-          {
-            id: "main-content",
-            type: "text",
-            content: { text: finalHtml },
-          },
-        ];
+          setDoc(updatedDoc);
+          setSaveStatus('success');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+
+          return updatedDoc;
+        }
+
+        const finalHtml = content;
+        const blocks: DocumentBlock[] = htmlToDocumentBlocks(finalHtml);
 
         const { latex } = isCodeMode
           ? { latex: content }

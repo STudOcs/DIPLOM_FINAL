@@ -78,6 +78,15 @@ class LatexService:
                             else:
                                 block_content['body_rows'] = ""
 
+                if b_type == 'list':
+                    raw_items = block_content.get('items', [])
+                    block_content['items'] = [
+                        self.escape_latex(str(item)) for item in raw_items
+                    ]
+                    block_content['environment'] = (
+                        'enumerate' if block_content.get('ordered') else 'itemize'
+                    )
+
                 ctx = {
                     'block_id': b_id,
                     **block_content
@@ -263,16 +272,60 @@ class LatexService:
             return {"text": self.unescape_latex(inner).strip()}
             
         elif b_type == 'heading':
-            # Ищем текст внутри \chapter{...}, \section{...} или \subsection{...}
-            match = re.search(r'\\(?:chapter|section|subsection)\s*{(.*?)}', inner, re.DOTALL)
-            # Определяем уровень заголовка
+            cleaned_inner = re.sub(
+                r'\\addcontentsline\s*{toc}\s*{chapter}\s*{.*?}',
+                '',
+                inner,
+                flags=re.DOTALL,
+            ).strip()
+
+            kind = "numbered"
             level = 1
-            if r'\section' in inner: level = 2
-            if r'\subsection' in inner: level = 3
-            
+            match = None
+
+            if r'\chapter*' in cleaned_inner:
+                kind = "structural"
+                level = 1
+                match = re.search(
+                    r'\\chapter\*\s*{(.*?)}',
+                    cleaned_inner,
+                    re.DOTALL,
+                )
+            elif r'\subsubsection' in cleaned_inner:
+                level = 4
+                match = re.search(
+                    r'\\subsubsection\s*{(.*?)}',
+                    cleaned_inner,
+                    re.DOTALL,
+                )
+            elif r'\subsection' in cleaned_inner:
+                level = 3
+                match = re.search(
+                    r'\\subsection\s*{(.*?)}',
+                    cleaned_inner,
+                    re.DOTALL,
+                )
+            elif r'\section' in cleaned_inner:
+                level = 2
+                match = re.search(
+                    r'\\section\s*{(.*?)}',
+                    cleaned_inner,
+                    re.DOTALL,
+                )
+            elif r'\chapter' in cleaned_inner:
+                level = 1
+                match = re.search(
+                    r'\\chapter\s*{(.*?)}',
+                    cleaned_inner,
+                    re.DOTALL,
+                )
+
+            text = match.group(1).strip() if match else cleaned_inner.strip()
+
             return {
-                "text": match.group(1).strip() if match else inner.strip(), 
-                "level": level
+                "text": self.unescape_latex(text),
+                "level": level,
+                "kind": kind,
             }
 
         elif b_type == 'image':
@@ -318,6 +371,36 @@ class LatexService:
                 "caption": caption_match.group(1).strip() if caption_match else "Таблица",
                 "column_spec": col_spec_match.group(1).strip() if col_spec_match else "|X|X|",
                 "rows": rows
+            }
+        
+        elif b_type == 'list':
+            env_match = re.search(
+                r'\\begin{(enumerate|itemize)}(.*?)\\end{\1}',
+                inner,
+                re.DOTALL,
+            )
+
+            if not env_match:
+                return old_content if old_content else {"items": [], "ordered": False}
+
+            environment = env_match.group(1)
+            list_body = env_match.group(2)
+
+            raw_items = re.findall(
+                r'\\item\s+(.*?)(?=\\item|$)',
+                list_body,
+                re.DOTALL,
+            )
+
+            items = [
+                self.unescape_latex(item).strip()
+                for item in raw_items
+                if item.strip()
+            ]
+
+            return {
+                "ordered": environment == "enumerate",
+                "items": items,
             }
 
         # Для блоков, которые мы еще не реализовали (таблицы и т.д.)

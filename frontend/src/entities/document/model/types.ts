@@ -1,6 +1,15 @@
 // src/entities/document/model/types.ts
 
-export type BlockType = 'heading' | 'text' | 'image' | 'table' | 'code' | 'formula' | 'title';
+export type BlockType =
+  | 'heading'
+  | 'text'
+  | 'image'
+  | 'table'
+  | 'list'
+  | 'code'
+  | 'formula'
+  | 'equation'
+  | 'title';
 
 export interface DocumentBlock {
   id: string;
@@ -8,10 +17,24 @@ export interface DocumentBlock {
   content: {
     text?: string;
     level?: number;
+    kind?: 'numbered' | 'structural';
+
     image_path?: string;
+    url?: string;
+    src?: string;
+    file?: string;
+    storage_path?: string;
     caption?: string;
     width?: number;
-    rows?: any[];
+
+    rows?: string[][];
+    column_spec?: string;
+
+    ordered?: boolean;
+    items?: string[];
+
+    formula?: string;
+    raw_inner?: string;
   };
 }
 
@@ -26,14 +49,15 @@ export type CompilationStatus =
   | 'compiled'
   | 'error';
 
-export type DocStatus = CompilationStatus | 'draft'; 
+
+export type DocStatus = CompilationStatus | 'draft';
 
 export interface TemplateItem {
-  id: number;           // В v1.1 бэк шлет "id"
+  id: number;
   name: string;
   description: string;
   content_json: DocumentBlock[];
-  latex_preambula_tmp: string; // Оставляем для генерации LaTeX
+  latex_preambula_tmp: string;
 }
 
 export interface DocumentItem {
@@ -42,11 +66,10 @@ export interface DocumentItem {
   title: string;
   template_id: number;
   content_json: DocumentBlock[];
-  latex_source: string; // Обязательное поле для синхронизации
+  latex_source: string;
   compilation_status: CompilationStatus;
   compilation_log?: string;
   changes_data_doc: string;
-  // Поля метаданных
   course_name?: string;
   lab_number?: number;
 }

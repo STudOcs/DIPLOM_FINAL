@@ -1,4 +1,20 @@
-[# if level == 1 #]\chapter{ [[ text ]] }
-[# elif level == 2 #]\section{ [[ text ]] }
-[# else #]\subsection{ [[ text ]] }
+[# if kind == "structural" #]
+\chapter*{[[ text | escape_latex ]]}
+\addcontentsline{toc}{chapter}{[[ text | escape_latex ]]}
+[# endif #]
+
+[# if kind != "structural" and level == 1 #]
+\chapter{[[ text | escape_latex ]]}
+[# endif #]
+
+[# if kind != "structural" and level == 2 #]
+\section{[[ text | escape_latex ]]}
+[# endif #]
+
+[# if kind != "structural" and level == 3 #]
+\subsection{[[ text | escape_latex ]]}
+[# endif #]
+
+[# if kind != "structural" and level != 1 and level != 2 and level != 3 #]
+\subsubsection{[[ text | escape_latex ]]}
 [# endif #]
